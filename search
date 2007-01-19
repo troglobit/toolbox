@@ -1,0 +1,18 @@
+#!/bin/sh
+# Usage:
+#        search DIR TEXT
+#
+# Searches for the TEXT in all files in DIR.
+# Avoids semantic.cache, .svn/, CVS/, .sgbuilt_user
+#
+
+if [ $# -lt 2 ]; then
+	echo "Usage: search DIR TEXT"
+	exit 1
+fi
+
+DIR=$1
+TXT=$2
+
+find ${DIR} -type d -name .svn -prune , -type d -name CVS -prune , -type f -a ! -name '*~' -a ! -name cscope.out -a ! -name semantic.cache -a ! -name .sgbuilt_user -print | xargs grep ${TXT}
+
