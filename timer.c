@@ -1,4 +1,4 @@
-/* Westermo OnTime AS - Timer Implementation.
+/* Implementation of "Implementing Software Timers" by Don Libes
  *
  * Copyright (C) 2006, 2007 Joachim Nilsson <jocke@vmlinux.org>
  *
@@ -34,49 +34,48 @@
  * SOFTWARE.
  */
 
-/* Periodic timers now added.
- * TODO: Test timers, both one-shot and periodic, with pthreads.
- */
-
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>             /* All the UNIX signal definitions */
+#include <signal.h>              /* All the UNIX signal definitions */
 #include <stdio.h>
-#include <string.h>             /* memset */
+#include <string.h>              /* memset */
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#include <unistd.h>             /*  */
+#include <unistd.h>              /*  */
+#ifdef UNITTEST
+#include <pthread.h>
+#endif
 
 #define TIMEVAL_MAX {INT_MAX, INT_MAX}
-#define TIMEVAL_MIN {0, 0} 
+#define TIMEVAL_MIN {0, 0}
 typedef struct timeval timeval_t;
 
 struct timer
 {
-      int inuse, periodic;       /* 1 if in use, dito if it is a periodic timer */
-      timeval_t time;            /* relative time to wait */
-      timeval_t period;          /* Period time for periodic timers */
-      void (*callback)(void *);  /* called on timeout */
-      void *arg;                 /* optional argument passed to callback */
-} ;
+   int inuse, periodic;         /* 1 if in use, dito if it is a periodic timer */
+   timeval_t time;              /* relative time to wait */
+   timeval_t period;            /* Period time for periodic timers */
+   void (*callback) (void *);   /* called on timeout */
+   void *arg;                   /* optional argument passed to callback */
+};
 
-static int max_timers = 0;                  /* Max timers, set by timers_init() */
-static struct timer *timers;                /* set of timers */
-static struct timer *timer_next = NULL;     /* timer we expect to run down next */
-static timeval_t time_timer_set;            /* time when physical timer was set */
+static int max_timers = 0;      /* Max timers, set by timers_init() */
+static struct timer *timers;    /* set of timers */
+static struct timer *timer_next = NULL; /* timer we expect to run down next */
+static timeval_t time_timer_set;        /* time when physical timer was set */
 
 static void disable_interrupts (void)
 {
    sigset_t s;
 
-   sigemptyset (&s); 
+   sigemptyset (&s);
    sigaddset (&s, SIGALRM);
 
    if (sigprocmask (SIG_BLOCK, &s, NULL) == -1)
    {
-      perror("Could not block signal SIGALRM");
+      perror ("Could not block signal SIGALRM");
    }
 }
 
@@ -84,12 +83,12 @@ static void enable_interrupts (void)
 {
    sigset_t s;
 
-   sigemptyset (&s); 
+   sigemptyset (&s);
    sigaddset (&s, SIGALRM);
 
    if (sigprocmask (SIG_UNBLOCK, &s, NULL) == -1)
    {
-      perror("Could not unblock signal SIGALRM");
+      perror ("Could not unblock signal SIGALRM");
    }
 }
 
@@ -97,7 +96,6 @@ static void enable_interrupts (void)
 static void start_physical_timer (timeval_t start)
 {
    struct itimerval val;
-   struct timeval now;
 
    memset (&val, 0, sizeof (struct itimerval));
    val.it_value = start;
@@ -109,8 +107,8 @@ static void start_physical_timer (timeval_t start)
       return;
    }
 }
-
 
+
 
 /* subtract time from all timers, enabling any that run out along the way */
 static void update_timers (timeval_t elapsed)
@@ -118,20 +116,20 @@ static void update_timers (timeval_t elapsed)
    int do_restart = 0;
    struct timer *t;
    static struct timer timer_last = {
-      0,                           /* in use */
-      0,                           /* non-periodic */
-      TIMEVAL_MAX,                 /* time */
-      TIMEVAL_MIN,                 /* period */
-      NULL                         /* event pointer */
+      0,                         /* in use */
+      0,                         /* non-periodic */
+      TIMEVAL_MAX,               /* time */
+      TIMEVAL_MIN,               /* period */
+      NULL                       /* event pointer */
    };
-  restart:
+ restart:
    timer_next = &timer_last;
 
    for (t = timers; t < &timers[max_timers]; t++)
    {
       if (t->inuse)
       {
-         if (timercmp (&elapsed, &t->time, <)) /* unexpired */
+         if (timercmp (&elapsed, &t->time, <))  /* unexpired */
          {
             timersub (&t->time, &elapsed, &t->time);
             if (timercmp (&t->time, &timer_next->time, <))
@@ -139,7 +137,7 @@ static void update_timers (timeval_t elapsed)
                timer_next = t;
             }
          }
-         else                   /* expired */
+         else                    /* expired */
          {
             /* Ah, t has expired, call user defined callback */
             t->callback (t->arg);
@@ -152,7 +150,7 @@ static void update_timers (timeval_t elapsed)
             }
             else
             {
-               t->inuse = 0;    /* remove timer */
+               t->inuse = 0;     /* remove timer */
             }
          }
       }
@@ -179,7 +177,7 @@ static void update_timers (timeval_t elapsed)
 static void timer_interrupt_handler (int dummy)
 {
    timeval_t elapsed, now;
-   
+
    gettimeofday (&now, NULL);
    timersub (&now, &time_timer_set, &elapsed);
    update_timers (elapsed);
@@ -209,7 +207,7 @@ int timers_init (int max)
 
    if (max < 1)
    {
-      errno = EINVAL;           /* Needs to be at least one timer. */
+      errno = EINVAL;            /* Needs to be at least one timer. */
       return 1;
    }
 
@@ -230,9 +228,11 @@ int timers_init (int max)
 
    /* OK, we're all setup OK here. */
    max_timers = max;
+
+   return 0;
 }
 
-struct timer *__timer_declare (int periodic, unsigned int time, void (*callback)(void *), void *arg)
+static struct timer *__timer_declare (int periodic, unsigned int time, void (*callback) (void *), void *arg)
 {
    /* All local variables in this API need to be on stack for thread safety. */
    struct timer *t;
@@ -252,14 +252,14 @@ struct timer *__timer_declare (int periodic, unsigned int time, void (*callback)
       if (!t->inuse)
          break;
    }
-      
+
    /* out of timers? */
    if (t == &timers[max_timers])
    {
       enable_interrupts ();
       return NULL;
    }
-      
+
    /* Setup new timer, do adjust the time base. */
    if (time / 1000)
    {
@@ -271,7 +271,7 @@ struct timer *__timer_declare (int periodic, unsigned int time, void (*callback)
       new.tv_sec = 0;
       new.tv_usec = time * 1000;
    }
-      
+
    /* install new timer */
    t->callback = callback;
    t->arg = arg;
@@ -289,7 +289,7 @@ struct timer *__timer_declare (int periodic, unsigned int time, void (*callback)
       start_physical_timer ((timer_next = t)->time);
       time_timer_set = now;
    }
-   else 
+   else
    {
       timeradd (&now, &new, &t1);
       timeradd (&timer_next->time, &time_timer_set, &t2);
@@ -335,13 +335,13 @@ struct timer *__timer_declare (int periodic, unsigned int time, void (*callback)
  *
  * Return value: Timer id, used for e.g. timer_undelcare().
  */
-struct timer *timer_declare_periodic (unsigned int period, void (*callback)(void *), void *arg)
+struct timer *timer_declare_periodic (unsigned int period, void (*callback) (void *), void *arg)
 {
    return __timer_declare (1, period, callback, arg);
 }
 
 /**
- * timer_declare - Create a new timer.
+ * timer_declare - Create a new one-shot timer.
  * @time: Time in milliseconds
  * @callback: Pointer to simple callback.
  * @arg: Argument to send to @callback, can be %NULL.
@@ -363,27 +363,33 @@ struct timer *timer_declare_periodic (unsigned int period, void (*callback)(void
  *
  * Return value: Timer id, used for e.g. timer_undelcare().
  */
-struct timer *timer_declare (unsigned int time, void (*callback)(void *), void *arg)
+struct timer *timer_declare (unsigned int time, void (*callback) (void *), void *arg)
 {
    return __timer_declare (0, time, callback, arg);
 }
 
 
-void timer_undeclare (struct timer *t)
+/**
+ * timer_undeclare - Cancel a running timer.
+ * @id: Timer to be removed.
+ *
+ * This function tries to remove a running timer.
+ */
+void timer_undeclare (struct timer *id)
 {
    timeval_t elapsed, now;      /* Must be on stack to be thread safe! */
 
    disable_interrupts ();
-   if (!t->inuse)
+   if (id && !id->inuse)
    {
       enable_interrupts ();
       return;
    }
 
-   t->inuse = 0;
+   id->inuse = 0;
 
    /* check if we were waiting on this one */
-   if (t == timer_next)
+   if (id == timer_next)
    {
       gettimeofday (&now, NULL);
       /* Time since last timer start. */
@@ -398,7 +404,65 @@ void timer_undeclare (struct timer *t)
    enable_interrupts ();
 }
 
+/**
+ * timer_running - Check if a timer is still running
+ * @id: Timer to check for.
+ * 
+ * Return value: True (1) if running, else false (0)
+ */
+int timer_running (struct timer *id)
+{
+   return id && id->inuse;
+}
+
+/**
+ * timer_restart - Restart an active timer
+ * @id: Timer to restart.
+ * 
+ * Return value: 
+ */
+int timer_restart (struct timer *id)
+{
+#if 0
+   timeval_t elapsed, now;      /* Must be on stack to be thread safe! */
+
+   disable_interrupts ();
+   if (id && !id->inuse)
+   {
+      enable_interrupts ();
+      errno = EINVAL;            /* Invalid timer, already undeclared. */
+
+      return 1;
+   }
+
+   gettimeofday (&now, NULL);
+
+   /* check if we were waiting on this one */
+   if (id == timer_next)
+   {
+      /* Disable before rescheduling. */
+      id->inuse = 0;
+
+      /* Time since last timer start. */
+      timersub (&now, &time_timer_set, &elapsed);
+      update_timers (elapsed);
+      if (timer_next)
+      {
+         start_physical_timer (timer_next->time);
+         time_timer_set = now;
+      }
+   }
+   else
+   {
+
+   }
+   enable_interrupts ();
+#else
+   return 0;
+#endif
+}
 
+
 /******************************* UNIT TEST CODE *******************************/
 #ifdef UNITTEST
 static void callback (void *arg)
@@ -407,6 +471,28 @@ static void callback (void *arg)
 
    printf ("callback() - %s", text);
    fflush (stdout);
+}
+
+void *checker_task (void *p __attribute__ ((unused)))
+{
+   while (1)
+   {
+      printf (" %s() ", __FUNCTION__);
+      sleep (1);
+   }
+
+   return NULL;
+}
+
+void *competing_task (void *p __attribute__ ((unused)))
+{
+   while (1)
+   {
+      printf (" %s() ", __FUNCTION__);
+      sleep (5);
+   }
+
+   return NULL;
 }
 
 /* TODO: XXX need to rewrite this unit test to not print anything on screen but
@@ -418,6 +504,13 @@ int main (void)
    struct timer *t;
    time_t start;
    time_t now;
+   pthread_t id;
+
+   /* Test for pthread safey */
+   pthread_create (&id, NULL, checker_task, NULL);
+   pthread_detach (id);
+   pthread_create (&id, NULL, competing_task, NULL);
+   pthread_detach (id);
 
    /* Declare 4 timers for this application. */
    timers_init (6);
@@ -429,7 +522,8 @@ int main (void)
    timer_declare (100000, callback, "100 seconds");
    timer_declare (70000, callback, "70 seconds");
    timer_declare (30000, callback, "30 seconds");
-   timer_declare_periodic (3000, callback, " > 3 sek period < ");
+   timer_declare_periodic (12000, callback, " > 12 sek period < ");
+#if 0
    t = timer_declare (2000, callback, "2 seconds");
    if (timer_declare (1000, callback, "1 second"))
    {
@@ -437,9 +531,9 @@ int main (void)
    }
    /* Withdraw 2 second timer... */
    timer_undeclare (t);
+#endif
 
-   printf ("Waiting ... (%lu) %s==================================================",
-           start, "tok\n"); //ctime (&start));
+   printf ("Waiting ... (%lu) %s==================================================", start, "tok\n");   //ctime (&start));
    fflush (stdout);
    for (i = 0; i < 105; i++)
    {
@@ -460,7 +554,7 @@ int main (void)
 
 /**
  * Local Variables:
- * compile-command: "gcc -O2 -DUNITTEST -o timer-test timer.c" 
+ * compile-command: "gcc -g -Wall -DUNITTEST -o timer-test timer.c -lpthread" 
  *  version-control: t
  *  kept-new-versions: 2
  *  c-file-style: "ellemtel"
