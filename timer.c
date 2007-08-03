@@ -211,6 +211,7 @@ int timers_init (int max)
       return 1;
    }
 
+   max_timers = max;
    timers = calloc (max_timers, sizeof (struct timer));
    if (!timers)
    {
@@ -225,9 +226,6 @@ int timers_init (int max)
    {
       return 1;
    }
-
-   /* OK, we're all setup OK here. */
-   max_timers = max;
 
    return 0;
 }
@@ -380,7 +378,7 @@ void timer_undeclare (struct timer *id)
    timeval_t elapsed, now;      /* Must be on stack to be thread safe! */
 
    disable_interrupts ();
-   if (id && !id->inuse)
+   if (!id || !id->inuse)
    {
       enable_interrupts ();
       return;
