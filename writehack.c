@@ -51,5 +51,5 @@ Compile with:
 gcc writehack.c -o writehack.so -ldl -shared
 
 Use with:
-LD_PRELOAD=writehack.so ./program
+LD_PRELOAD=./writehack.so ./program
 */
