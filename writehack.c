@@ -18,6 +18,7 @@
 * 02111-1307, USA.
 */
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
