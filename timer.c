@@ -8,9 +8,10 @@
  * Wiley & Sons, 1993, ISBN 0-471-57805-3.  Also available online from the
  * author's home page http://www.kohala.com/start/libes.timers.txt
  *
- * Nota bene: The interrupt disable/enable routines are simulated using
- * sigprocmask() and pthread_mutex_lock() with a mutex initialized in
- * timers_init().
+ * Nota Bene: The interrupt disable/enable is simulated by temporarily
+ * blocking all signals using sigprocmask().  This may not be adequate
+ * in some settings, particulary in threaded processes, e.g. a full
+ * NPTL system where the kernel does the thread scheduling.
  *
  * The time_now, time_timer_set variables and all operations on them have been
  * adapted to using the UNIX gettimeofday() & c:o system calls.
@@ -74,6 +75,7 @@ static void disable_interrupts (void)
    sigaddset (&s, SIGALRM);
 
    if (sigprocmask (SIG_BLOCK, &s, NULL) == -1)
+      //if (pthread_sigmask (SIG_BLOCK, &s, NULL) == -1)
    {
       perror ("Could not block signal SIGALRM");
    }
@@ -87,6 +89,7 @@ static void enable_interrupts (void)
    sigaddset (&s, SIGALRM);
 
    if (sigprocmask (SIG_UNBLOCK, &s, NULL) == -1)
+      //if (pthread_sigmask (SIG_UNBLOCK, &s, NULL) == -1)
    {
       perror ("Could not unblock signal SIGALRM");
    }
@@ -107,9 +110,8 @@ static void start_physical_timer (timeval_t start)
       return;
    }
 }
+
 
-
-
 /* subtract time from all timers, enabling any that run out along the way */
 static void update_timers (timeval_t elapsed)
 {
@@ -120,7 +122,8 @@ static void update_timers (timeval_t elapsed)
       0,                         /* non-periodic */
       TIMEVAL_MAX,               /* time */
       TIMEVAL_MIN,               /* period */
-      NULL                       /* event pointer */
+      NULL,                      /* event pointer */
+      NULL                       /* optional argument */
    };
  restart:
    timer_next = &timer_last;
@@ -174,7 +177,7 @@ static void update_timers (timeval_t elapsed)
 }
 
 
-static void timer_interrupt_handler (int dummy)
+static void timer_interrupt_handler (int dummy __attribute__ ((unused)))
 {
    timeval_t elapsed, now;
 
@@ -230,6 +233,7 @@ int timers_init (int max)
    return 0;
 }
 
+
 static struct timer *__timer_declare (int periodic, unsigned int time, void (*callback) (void *), void *arg)
 {
    /* All local variables in this API need to be on stack for thread safety. */
@@ -310,6 +314,7 @@ static struct timer *__timer_declare (int periodic, unsigned int time, void (*ca
    return t;
 }
 
+
 /**
  * timer_declare_periodic - Create a new periodic timer.
  * @period: Period time in milliseconds
@@ -377,13 +382,12 @@ void timer_undeclare (struct timer *id)
 {
    timeval_t elapsed, now;      /* Must be on stack to be thread safe! */
 
-   disable_interrupts ();
    if (!id || !id->inuse)
    {
-      enable_interrupts ();
       return;
    }
 
+   disable_interrupts ();
    id->inuse = 0;
 
    /* check if we were waiting on this one */
@@ -401,6 +405,7 @@ void timer_undeclare (struct timer *id)
    }
    enable_interrupts ();
 }
+
 
 /**
  * timer_running - Check if a timer is still running
@@ -419,7 +424,7 @@ int timer_running (struct timer *id)
  * 
  * Return value: 
  */
-int timer_restart (struct timer *id)
+int timer_restart (struct timer *id __attribute__ ((unused)))
 {
 #if 0
    timeval_t elapsed, now;      /* Must be on stack to be thread safe! */
@@ -475,7 +480,7 @@ void *checker_task (void *p __attribute__ ((unused)))
 {
    while (1)
    {
-      printf (" %s() ", __FUNCTION__);
+      printf (" %s(%p) ", __FUNCTION__, pthread_self ());
       sleep (1);
    }
 
@@ -486,7 +491,7 @@ void *competing_task (void *p __attribute__ ((unused)))
 {
    while (1)
    {
-      printf (" %s() ", __FUNCTION__);
+      printf (" %s(%p) ", __FUNCTION__, pthread_self ());
       sleep (5);
    }
 
@@ -499,10 +504,12 @@ void *competing_task (void *p __attribute__ ((unused)))
 int main (void)
 {
    int i;
-   struct timer *t;
+/*    struct timer *t; */
    time_t start;
    time_t now;
    pthread_t id;
+
+   printf ("Parent pid:%p\n", pthread_self());
 
    /* Test for pthread safey */
    pthread_create (&id, NULL, checker_task, NULL);
