@@ -1,3 +1,10 @@
+;; Dot emacs configuration file
+;; Joachim Nilsson <troglobit@gmail.com>
+;; 
+;; NOTE: This ~/.emacs file is unlikely to work with anything else but the latest
+;;       bleeding edge Emacs version from CVS.  Dragons ahead!
+;;
+
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
 
@@ -18,6 +25,12 @@
 
 ;;; Autoload SCO UNIX Cscope
 (require 'xcscope)
+
+;;; Neat gnome-terminal like F11 toggle between fullscreen and windowed.
+(defun fullscreen ()
+  (interactive)
+  (set-frame-parameter nil 'fullscreen
+                       (if (frame-parameter nil 'fullscreen) nil 'fullboth)))
 
 ;; http://info.borland.com/techpubs/jbuilder/jbuilder9/introjb/key_cua.html
 ;; These are the bindings also used in early Borland C++ versions, like 3.0
@@ -52,6 +65,8 @@
 (global-set-key [f9] 'compile)
 (global-set-key [C-f9] 'compile)
 (global-set-key [S-f9] 'gdb)
+
+(global-set-key [f11] 'fullscreen)
 
 ;;
 (global-set-key [C-prior] 'beginning-of-buffer)
@@ -135,10 +150,6 @@
 ;; in console)
 (menu-bar-mode (if window-system 1 -1))
 
-;; turn off the toolbar
-(if (>= emacs-major-version 21)
-    (tool-bar-mode -1))
-
 ;; turn on word wrapping in text mode
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
@@ -182,10 +193,6 @@
       (end-of-line)
       (forward-char 1))))
 
-;; insert functions
-(global-unset-key "\C-t")
-(global-set-key "\C-t\C-h" 'insert-function-header)
-
 (defun insert-function-header () (interactive)
   (insert "/**\n")
   (insert " * function - Short description.\n")
@@ -194,8 +201,6 @@
   (insert " * Returns: \n")
   (insert " * \n")
   (insert " */\n"))
-
-(global-set-key "\C-t\C-b" 'insert-file-header)
 
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo OnTime - <FILE DESCRIPTION>\n")
@@ -207,8 +212,6 @@
   (insert " * Description:\n")
   (insert " *\n")
   (insert " */\n"))
-
-(global-set-key "\C-t\C-i" 'insert-include-body)
 
 (defun insert-include-body () (interactive)
   (insert "/* \\\\/ Westermo OnTime - <FILE DESCRIPTION>\n")
@@ -226,6 +229,24 @@
   (insert "\n")
   (insert "#endif /* __FILE_H__ */\n"))
 
+(defun insert-file-footer () (interactive)
+  (insert "/**\n")
+  (insert " * Local Variables:\n")
+  (insert " *  compile-command: \"gcc -g -I../include -o unittest -DUTEST=1 -DUNITTEST kill_procname.c\"\n")
+  (insert " *  version-control: t\n")
+  (insert " *  kept-new-versions: 2\n")
+  (insert " *  c-file-style: \"ellemtel\"\n")
+  (insert " * End:\n")
+  (insert " */\n"))
+
+;; insert functions
+(global-unset-key "\C-t")
+(global-set-key "\C-t\C-t" 'insert-file-header)     ; Top
+(global-set-key "\C-t\C-b" 'insert-file-footer)     ; Bottom
+(global-set-key "\C-t\C-h" 'insert-function-header) ; Header
+(global-set-key "\C-t\C-i" 'insert-include-body)    ; Include
+
+
 
 ;; ===========================
 ;; Emacs customized settings
@@ -236,6 +257,8 @@
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
  '(all-christian-calendar-holidays t)
+ '(c-default-style (quote ((c-mode . "ellemtel") (c++-mode . "ellemtel") (java-mode . "java") (awk-mode . "awk") (other . "gnu"))))
+ '(c-max-one-liner-length 132)
  '(calendar-week-start-day 1)
  '(case-fold-search t)
  '(case-replace t)
@@ -264,6 +287,8 @@
  '(erc-server "irc.labs.westermo.se")
  '(erc-user-full-name "Joachim Nilsson")
  '(european-calendar-style t)
+ '(gdb-same-frame t)
+ '(gdb-show-main t)
  '(global-auto-revert-mode t)
  '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
@@ -298,6 +323,6 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- )
+ '(default ((t (:stipple nil :background "#ffffff" :foreground "#000000" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 83 :width normal :foundry "unknown" :family "Liberation Mono")))))
 
 (put 'downcase-region 'disabled nil)
