@@ -34,13 +34,17 @@ static char *trim (char *token)
       return NULL;
    }
 
-   while (isspace(*token))
-      token ++;
+   while (isspace (*token))
+   {
+      token++;
+   }
 
    start = token;
-   
-   while (!isspace(*token))
-      token ++;
+
+   while (!isspace (*token))
+   {
+      token++;
+   }
 
    *token = 0;
 
@@ -87,19 +91,21 @@ int proc_find_by_name (char *procname)
    DIR *dir;
    struct dirent *entry;
 
-   dir = opendir("/proc");
+   dir = opendir ("/proc");
    if (!dir)
    {
       return 0;
    }
 
-   while ((entry = readdir(dir))) 
+   while ((entry = readdir (dir)))
    {
       int this;
       char *val;
 
-      if (!isdigit(*entry->d_name))
+      if (!isdigit (*entry->d_name))
+      {
          continue;
+      }
 
       this = atoi (entry->d_name);
       val = proc_get_property (this, "Name");
@@ -115,7 +121,7 @@ int proc_find_by_name (char *procname)
          free (val);
       }
    }
-   closedir(dir);
+   closedir (dir);
 
    return pid;
 }
@@ -126,7 +132,10 @@ int proc_find_ppid (char *procname)
    char *property;
 
    pid = proc_find_by_name (procname);
-   if (!pid) return 0;
+   if (!pid)
+   {
+      return 0;
+   }
 
    property = proc_get_property (pid, "PPid");
    if (property)
@@ -174,7 +183,7 @@ int main (int argc, char *argv[])
 
    return 0;
 }
-#endif  /* UNITTEST */
+#endif /* UNITTEST */
 
 /**
  * Local Variables:
