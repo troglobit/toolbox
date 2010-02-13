@@ -76,7 +76,40 @@ struct ascii_entry {
    printf (fmt, ##args);                        \
 }
 
-int main (void)
+char *sys_ascii_seq (int code)
+{
+   if (code <= 32)
+   {
+      return ascii[code].seq;
+   }
+   if (code == 127)
+   {
+      return "^?";
+   }
+
+   return "";
+}
+
+/* XXX: Not thread safe. */
+char *sys_ascii_abbr (int code)
+{
+   static char abbr[2];
+
+   if (code <= 32)
+   {
+      return ascii[code].abbr;
+   }
+   if (code == 127)
+   {
+      return "DEL";
+   }
+
+   sprintf (abbr, "%c", code);
+
+   return abbr;
+}
+
+int sys_ascii_table (void)
 {
    int i, rows, cols, col = 1, row = 1, startrow = 2;
    struct winsize win = {.ws_col = 80, .ws_row = 24};
@@ -87,11 +120,11 @@ int main (void)
 
    if (cols < 20)
    {
-      printf ("Sorry, too small (not wide enough) display. Needs at least 20 chars\n");
+      fprintf (stderr, "Sorry, too small (not wide enough) display. Needs at least 20 chars\n");
       return 1;
    }
 
-   cls();
+   cls ();
    for (i = 0; i <= 127; i++)
    {
       if (i % rows == 0)
@@ -109,22 +142,16 @@ int main (void)
          printxy (col, row++, "=================== \n");
       }
 
-      if (i <= 32)
-      {
-         printxy (col, row++, "%3d  0x%02x  %-3s %-3s\n", i, i, ascii[i].seq, ascii[i].abbr);
-      }
-      else if (i == 127)
-      {
-         printxy (col, row++, "%3d  0x%02x  %-3s %-3s\n", i, i, "^?", "DEL");
-      }
-      else
-      {
-         printxy (col, row++, "%3d  0x%02x  %-3s %-3c\n", i, i, "", i);
-      }
+      printxy (col, row++, "%3d  0x%02x  %-3s %-3s\n", i, i, sys_ascii_seq (i), sys_ascii_abbr (i));
    }
    gotoxy (1, win.ws_row);
 
    return 0;
+}
+
+int main (void)
+{
+   return sys_ascii_table ();
 }
 
 /**
