@@ -115,6 +115,9 @@ int sys_ascii_code (char *token)
    int code = -1;
    char *ptr;
 
+   /* "The [strtoul()] implementation *may* also set errno to EINVAL in case no
+    * conversion was performed (no digits seen, and 0 returned).".  So we also
+    * consult the endptr to verify that any conversion was performed. */
    errno = 0;
    code = strtoul (token, &ptr, 10);
    if (errno || ptr == token)
