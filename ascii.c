@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 
@@ -109,6 +110,32 @@ char *sys_ascii_abbr (int code)
    return abbr;
 }
 
+int sys_ascii_code (char *token)
+{
+   int code = -1;
+   char *ptr;
+
+   errno = 0;
+   code = strtoul (token, &ptr, 10);
+   if (errno || ptr == token)
+   {
+      int i;
+
+      for (i = 0; i < 32; i++)
+      {
+         if (!strcmp (ascii[i].seq, token) || !strcmp (ascii[i].abbr, token))
+         {
+            return i;
+         }
+      }
+
+      errno = EINVAL;
+      return -1;                /* Unknown ASCII character/symbol/abbrev. */
+   }
+
+   return code;
+}
+
 int sys_ascii_table (void)
 {
    int i, rows, cols, col = 1, row = 1, startrow = 2;
@@ -149,14 +176,24 @@ int sys_ascii_table (void)
    return 0;
 }
 
-int main (void)
+int main (int argc, char *argv[])
 {
+   if (argc > 1)
+   {
+      int code = sys_ascii_code (argv[1]);
+
+      printf ("Arg: %s => dec:%3d  hex:0x%02x seq:%-3s abbrev:%-3s\n", argv[1], code, code, sys_ascii_seq (code), sys_ascii_abbr (code));
+
+      return 0;
+   }
+
    return sys_ascii_table ();
 }
 
 /**
  * Local Variables:
  *  version-control: t
+ *  compile-command: "CFLAGS='-g' make ascii"
  *  c-file-style: "ellemtel"
  * End:
  */
