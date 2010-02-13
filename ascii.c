@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 /* Contents of array shamelessly stolen from the Wikipedia article on ASCII
@@ -105,6 +106,12 @@ char *sys_ascii_abbr (int code)
       return "DEL";
    }
 
+   if (code > 255)
+   {
+      errno = EINVAL;
+      return "NUL";
+   }
+
    sprintf (abbr, "%c", code);
 
    return abbr;
@@ -134,6 +141,12 @@ int sys_ascii_code (char *token)
 
       errno = EINVAL;
       return -1;                /* Unknown ASCII character/symbol/abbrev. */
+   }
+
+   if (code > 255)
+   {
+      errno = EINVAL;
+      return -1;
    }
 
    return code;
@@ -184,6 +197,12 @@ int main (int argc, char *argv[])
    if (argc > 1)
    {
       int code = sys_ascii_code (argv[1]);
+
+      if (-1 == code)
+      {
+         fprintf (stderr, "Cannot find a matching ASCII character for %s: %s\n", argv[1], strerror (errno));
+         return 1;
+      }
 
       printf ("Arg: %s => dec:%3d  hex:0x%02x seq:%-3s abbrev:%-3s\n", argv[1], code, code, sys_ascii_seq (code), sys_ascii_abbr (code));
 
