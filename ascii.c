@@ -15,10 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
+#include <errno.h>              /* errno */
 #include <stdio.h>
-#include <string.h>
+#include <string.h>             /* strerror() */
+#include <stdlib.h>             /* strtoul() */
 #include <sys/ioctl.h>
+#include <unistd.h>             /* STDIN_FILENO */
 
 /* Contents of array shamelessly stolen from the Wikipedia article on ASCII
  * control codes, http://en.wikipedia.org/wiki/C0_and_C1_control_codes */
@@ -122,11 +124,17 @@ int sys_ascii_code (char *token)
    int code = -1;
    char *ptr;
 
+   if (!token)
+   {
+      errno = EINVAL;
+      return -1;
+   }
+
    /* "The [strtoul()] implementation *may* also set errno to EINVAL in case no
     * conversion was performed (no digits seen, and 0 returned)." -- man strtoul(3).
     * So we also consult the endptr to verify that any conversion was performed. */
    errno = 0;
-   code = strtoul (token, &ptr, 10);
+   code = strtoul (token, &ptr, 0);
    if (errno || ptr == token)
    {
       int i;
@@ -157,13 +165,19 @@ int sys_ascii_table (void)
    int i, rows, cols, col = 1, row = 1, startrow = 2;
    struct winsize win = {.ws_col = 80, .ws_row = 24};
    
-   ioctl (2, TIOCGWINSZ, &win);
+   ioctl (STDIN_FILENO, TIOCGWINSZ, &win);
+   if (win.ws_row == 0 || win.ws_col == 0)
+   {
+      /* Fallback to some defaults if TIOCGWINSZ is broken. */
+      win.ws_row = 24;
+      win.ws_col = 80;
+   }
    rows = win.ws_row - 4;
    cols = win.ws_col;
 
    if (cols < 20)
    {
-      fprintf (stderr, "Sorry, too small (not wide enough) display. Needs at least 20 chars\n");
+      fprintf (stderr, "Sorry, %dx%d is too small (not wide enough) display. Needs at least 20 chars\n", win.ws_col, win.ws_row);
       return 1;
    }
 
@@ -204,7 +218,7 @@ int main (int argc, char *argv[])
          return 1;
       }
 
-      printf ("Arg: %s => dec:%3d  hex:0x%02x seq:%-3s abbrev:%-3s\n", argv[1], code, code, sys_ascii_seq (code), sys_ascii_abbr (code));
+      printf ("Arg: %s => dec:%3d hex:0x%02x seq:%-3s abbrev:%-3s\n", argv[1], code, code, sys_ascii_seq (code), sys_ascii_abbr (code));
 
       return 0;
    }
