@@ -168,9 +168,11 @@ int sys_ascii_table (void)
    ioctl (STDIN_FILENO, TIOCGWINSZ, &win);
    if (win.ws_row == 0 || win.ws_col == 0)
    {
-      /* Fallback to some defaults if TIOCGWINSZ is broken. */
-      win.ws_row = 24;
-      win.ws_col = 80;
+      /* Fallback to some usable defaults if TIOCGWINSZ is broken, e.g., on serial
+       * TTYs.  There is no way for the kernel to know anything about a virtual
+       * terminal attached to a serial port, if any. */
+      win.ws_row = 128 + 4;
+      win.ws_col = 58;
    }
    rows = win.ws_row - 4;
    cols = win.ws_col;
