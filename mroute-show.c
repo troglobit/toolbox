@@ -176,7 +176,7 @@ static int __build_vif_table (char ***vif_table)
          continue;              /* Invalid ID? */
 
       token = strtok (NULL, " \t");
-      (*vif_table)[id] = strdup (token);
+      (*vif_table)[cnt] = strdup (token);
       cnt++;
    }
 
@@ -190,7 +190,10 @@ void __free_vif_table (char **vif_table, int num)
    int i;
 
    for (i = 0; i < num; i++)
-      free (vif_table[i]);
+   {
+      if (vif_table[i])
+         free (vif_table[i]);
+   }
 
    free (vif_table);
 }
@@ -211,7 +214,7 @@ void __free_vif_table (char **vif_table, int num)
  */
 ssize_t sys_mroute_dump (sys_mroute_t **routes)
 {
-   ssize_t i = 0, num = 0;
+   ssize_t i = 0, cnt = 0, num = 0;
    char buf[120];
    char *dummy;
    char **vif_table = NULL;
@@ -223,7 +226,10 @@ ssize_t sys_mroute_dump (sys_mroute_t **routes)
 
    fp = fopen ("/proc/net/ip_mr_cache", "r");
    if (!fp)
+   {
+      __free_vif_table (vif_table, num);
       return -1;
+   }
 
    /* Count number of routes. */
    dummy = fgets (buf, sizeof (buf), fp); /* Skip header. */
@@ -233,12 +239,13 @@ ssize_t sys_mroute_dump (sys_mroute_t **routes)
       if (strlen (buf) < 10)
          continue;
 
-      num++;
+      cnt++;
    }
 
-   *routes = calloc (num, sizeof (sys_mroute_t));
+   *routes = calloc (cnt, sizeof (sys_mroute_t));
    if (NULL == *routes)
    {
+      __free_vif_table (vif_table, num);
       fclose (fp);
       return -1;
    }
@@ -254,6 +261,8 @@ ssize_t sys_mroute_dump (sys_mroute_t **routes)
 
       i++;
    }
+
+   __free_vif_table (vif_table, num);
    fclose (fp);
 
    return i;
