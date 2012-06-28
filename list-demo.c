@@ -58,7 +58,6 @@ int main (void)
 	i = 0;
 #if LIST_FOREACH_SAFE  /* Actual BSD systems with working sys/queue.h */
 	LIST_FOREACH_SAFE(entry, &node_list, link, tmp) {
-	while (node_list.lh_first != NULL) {
 		LIST_REMOVE(entry, link);
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
