@@ -33,7 +33,7 @@ LIST_HEAD(, node) node_list = LIST_HEAD_INITIALIZER();
 int main (void)
 {
 	int i;
-	node_t *entry;
+	node_t *entry, *tmp;
 
 //	LIST_INIT(&node_list);
 
@@ -54,11 +54,23 @@ int main (void)
 	}
 
 	printf("Removing all entries, cleaning up...\n");
-	LIST_FOREACH(entry, &node_list, link) {
+
+	i = 0;
+#if LIST_FOREACH_SAFE  /* Actual BSD systems with working sys/queue.h */
+	LIST_FOREACH_SAFE(entry, &node_list, link, tmp) {
+	while (node_list.lh_first != NULL) {
 		LIST_REMOVE(entry, link);
+		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
 	}
-
+#else
+	while (!LIST_EMPTY(&node_list)) {
+		entry = LIST_FIRST(&node_list);
+		LIST_REMOVE(entry, link);
+		printf("  Entry %d => data:%d\n", i++, entry->data);
+		free(entry);
+	}
+#endif
 	printf("Done, exiting.\n");
 
 	return 0;
