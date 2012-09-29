@@ -13,12 +13,15 @@ MAKEFLAGS  = --no-print-directory
 # Override default implicit rules
 %.o: %.c
 	@printf "  CC      $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
+	@echo   "  $(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<"
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 %: %.o
 	@printf "  LINK    $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
+	@echo   "  $(CC) $(CFLAGS) $(LDFLAGS) -Wl,-Map,$@.map -o $@ $^ $(LDLIBS$(LDLIBS-$(@)))"
 	@$(CC) $(CFLAGS) $(LDFLAGS) -Wl,-Map,$@.map -o $@ $^ $(LDLIBS$(LDLIBS-$(@)))
 
 %.so: %.o
 	@printf "  PLUGIN  $(subst $(ROOTDIR)/,,$(shell pwd)/$@)\n"
-	@$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	@echo   "  $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)"
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
