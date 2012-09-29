@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <limits.h>		/* INT_MAX */
 #include <stdio.h>
 #include <stdlib.h>		/* atexit() */
 #include <string.h>		/* strlen() */
@@ -24,15 +25,17 @@
 #define MAX_WIDTH    80
 #define msleep(msec) usleep(msec * 1000)
 
-xstatic char spinner(void)
+static char spinner(void)
 {
-	static int i = 0;
+	static int i = INT_MAX;
 	char *states = "|/-\\";
+//	char *states = ".oOo";
+//	char *states = ".oO°Oo.";
+//	char *states = "v<^>";
+//	char *states = ".oO@*";
 
-	if (i >= strlen(states))
-		i = 0;
-
-	return states[i++];
+	/* Subtract to get clockwise spinning. */
+	return states[i-- % 4];	/* % Number of states */
 }
 
 progress(int percent, int max_width)
@@ -69,10 +72,10 @@ int main(int argc, char const *argv[])
 	while (percent <= 100) {
 		for (i = 0; i < 10; i++) {
 			progress(percent, MAX_WIDTH);
-			msleep(10);
+			msleep(2);
 		}
 		percent++;
-		msleep(10);
+		msleep(50);
 	}
 	puts("");
 
