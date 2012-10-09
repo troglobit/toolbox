@@ -1,6 +1,6 @@
 /* Poor mans telnet expect in C. 
  * 
- * Copyright (c) 2010  Joachim Nilsson <joachim.nilsson@member.fsf.org>
+ * Copyright (c) 2010, 2012  Joachim Nilsson <troglobit@gmail.com>
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,81 +19,193 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-/* Note: addr must be in network byte order, so htonl() it if needed! */
-char *sys_telnet_expect (int addr, short port, char *script[])
+#if 0
+# define TELL(fmt, args...) fprintf (stderr, fmt "\n", ##args)
+#else
+# define TELL(fmt, args...)
+#endif
+
+int sys_telnet_close (sdbuf_t *ctx)
 {
-   int i, sd;
-   char *ptr;
-   ssize_t bytes;
-   static char buf[BUFSIZ];
+   free (ctx->buf);
+   close (ctx->sd);
+   free (ctx);
+
+   return 0;
+}
+
+/* Open telnet connection to @addr:@port and connect. */
+sdbuf_t *sys_telnet_open (int addr, short port)
+{
+   int saved_errno;
    struct sockaddr s;
    struct sockaddr_in *sin;
+   sdbuf_t *ctx = (sdbuf_t *)malloc (sizeof(sdbuf_t));
 
-   sd = socket (PF_INET, SOCK_STREAM, 0);
-   if (-1 == sd)
+   if (!ctx)
    {
+      //perror("Failed allocating expect ctxect");
+      return NULL;
+   }
+
+   ctx->buf = (char *)malloc (BUFSIZ);
+   if (!ctx->buf)
+   {
+      //perror("Failed allocating expect buffer");
+      free (ctx);
+      return NULL;
+   }
+
+   ctx->sd = socket (PF_INET, SOCK_STREAM, 0);
+   if (-1 == ctx->sd)
+   {
+      saved_errno = errno;
       //perror ("Failed creating socket");
+      free (ctx->buf);
+      free (ctx);
+      errno = saved_errno;
       return NULL;
    }
 
    sin = (struct sockaddr_in *)&s;
    sin->sin_family = AF_INET;
-   sin->sin_port = htons (port);
+   sin->sin_port = port;
    sin->sin_addr.s_addr = addr;
-   if (-1 == connect (sd, &s, sizeof (s)))
+   if (-1 == connect (ctx->sd, &s, sizeof (s)))
    {
+      saved_errno = errno;
       //perror ("Cannot connect to telnet daemon");
+      sys_telnet_close (ctx);
+      errno = saved_errno;
+
       return NULL;
    }
+
+   return ctx;
+}
+
+/* Issue @script sequence on telnet @sd, with optional @output */
+int sys_telnet_expect (sdbuf_t *ctx, char *script[], FILE *output)
+{
+   int i, first, cont, result = 0;
+   ssize_t len;
 
    for (i = 0; script[i]; i++)
    {
-      if (read (sd, buf, sizeof(buf)) <= 0)
+      len = read (ctx->sd, ctx->buf, BUFSIZ);
+      if (len <= 0)
       {
          //perror ("no more data");
-         return NULL;
+         result = errno;
+         break;
       }
+      ctx->buf[len] = 0;
 
-      if (!strstr (buf, script[i++]))
+      TELL("Got line: '%s' is it '%s'", ctx->buf, script[i]);
+      if (!strstr (ctx->buf, script[i++]))
       {
          //perror ("no match");
-         errno = ENOMSG;
-         return NULL;
+         result = ENOMSG;
+         break;
       }
-      if (write (sd, script[i], strlen (script[i])) <= 0)
+
+      TELL("Sending line: '%s'", script[i]);
+      if (write (ctx->sd, script[i], strlen (script[i])) <= 0)
       {
          //perror ("cannot send");
-         return NULL;
+         result = errno;
+         break;
       }
    }
-   bytes = read (sd, buf, sizeof(buf));
-   if (bytes <= 0)
-   {
-      //perror ("no result");
-      return NULL;
-   }
-   close (sd);
-   buf[bytes] = 0;
 
-   /* Skip last line -- only the returning prompt. */
-   ptr = strrchr (buf, '\n');
-   if (ptr) *ptr = 0;
-   /* Skip first line -- only an echo of the last command */
-   ptr = strchr (buf, '\n');
-   if (ptr)
+   cont = 1;
+   first = 1;
+   while (output && cont)
    {
-      *ptr = 0;
-      ptr++;
+      char *ptr = ctx->buf, *tmp;
+
+      len = read (ctx->sd, ctx->buf, BUFSIZ);
+      if (len == -1)
+      {
+         if (errno == EINTR)
+            continue;
+
+         result = errno;
+         break;
+      }
+      ctx->buf[len] = 0;
+
+      TELL("Read line: '%s'", ctx->buf);
+
+      /* Skip first line -- only an echo of the last command */
+      if (first)
+      {
+         first = 0;
+         ptr = strchr (ctx->buf, '\n');
+         if (ptr)
+            ptr++;
+         else
+            ptr = ctx->buf;
+      }
+
+      TELL("Comparing '%s' with '%s'", ptr, script[i - 2]);
+
+      /* Skip last line -- only the returning prompt. */
+      tmp = strstr (ptr, script[i - 2]);
+      if (tmp)
+      {
+         TELL("OK, last line.  Good bye!");
+         cont = 0;
+         *tmp = 0;
+
+         tmp = strrchr (ptr, '\n');
+         if (tmp)
+            *++tmp = 0;
+      }
+
+      if (output)
+         fputs (ptr, output);
    }
-   else
+
+   return result;
+}
+
+/**
+ * sys_telnet_session - Very simple expect-like implementation for telnet.
+ * @addr: Must be in network byte order, use htonl().
+ * @port: IP port to connect to, use htons().
+ * @script: Expect like script of paired 'expect', 'response' strings.
+ * @output: A &FILE pointer to a tmpfile() for output from the last command.
+ *
+ * This is a very simple expect-like implementation for querying and
+ * operating daemons remotely over telnet.
+ *
+ * The @script is a query-response type of list of strings leading up to
+ * a final command, which output is then written to the given @output file.
+ *
+ * Returns:
+ * POSIX OK(0), or non-zero with errno set on error.
+ */
+int sys_telnet_session (int addr, short port, char *script[], FILE *output)
+{
+   sdbuf_t *sdbuf = sys_telnet_open (addr, port);
+   int result = 0;
+
+   if (!sdbuf)
+       return errno;
+
+   if (sys_telnet_expect (sdbuf, script, output))
    {
-      ptr = buf;
+      result = errno;
    }
-      
-   return ptr;
+
+   sys_telnet_close  (sdbuf);
+
+   return errno = result;
 }
 
 
