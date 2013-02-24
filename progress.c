@@ -1,6 +1,6 @@
 /* Very simple termios based progress bar
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2012, 2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,13 +17,8 @@
 
 #include <limits.h>		/* INT_MAX */
 #include <stdio.h>
-#include <stdlib.h>		/* atexit() */
-#include <string.h>		/* strlen() */
-#include <unistd.h>		/* usleep() */
-#include "conio.h"
 
-#define MAX_WIDTH    80
-#define msleep(msec) usleep(msec * 1000)
+#include "conio.h"
 
 static char spinner(void)
 {
@@ -38,7 +33,7 @@ static char spinner(void)
 	return states[i-- % 4];	/* % Number of states */
 }
 
-progress(int percent, int max_width)
+void progress(int percent, int max_width)
 {
 	int i, bar = percent * max_width / 100;
 
@@ -54,17 +49,23 @@ progress(int percent, int max_width)
 	}
 
 	printf("]");
-
 }
+
+#ifdef UNITTEST
+#include <stdlib.h>		/* atexit() */
+#include <unistd.h>		/* usleep() */
+
+#define MAX_WIDTH    80
+#define msleep(msec) usleep(msec * 1000)
 
 static void bye(void)
 {
 	showcursor();
 }
 
-int main(int argc, char const *argv[])
+int main(int argc __attribute__((unused)), char const *argv[] __attribute__((unused)))
 {
-	int i, loop, percent = 0;
+	int i, percent = 0;
 
 	atexit(bye);
 	hidecursor();
@@ -81,9 +82,11 @@ int main(int argc, char const *argv[])
 
 	return 0;
 }
+#endif	/* UNITTEST */
 
 /**
  * Local Variables:
+ *  compile-command: "gcc -g -I../../include -o unittest -DUNITTEST progress.c && ./unittest"
  *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
