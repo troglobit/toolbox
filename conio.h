@@ -1,6 +1,6 @@
 /* A conio.h like implementation for VTANSI displays.
  *
- * Copyright (c) 2009-2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2009-2013  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,17 +49,17 @@
 #define WHITE        0x17
 
 /* Esc[2JEsc[1;1H             - Clear screen and move cursor to 1,1 (upper left) pos. */
-#define clrscr()              puts ("\e[2J\e[1;1H")
+#define clrscr()              fputs ("\e[2J\e[1;1H", stdout)
 /* Esc[K                      - Erases from the current cursor position to the end of the current line. */
-#define clreol()              puts ("\e[K")
+#define clreol()              fputs ("\e[K", stdout)
 /* Esc[2K                     - Erases the entire current line. */
-#define delline()             puts ("\e[2K")
+#define delline()             fputs ("\e[2K", stdout)
 /* Esc[Line;ColumnH           - Moves the cursor to the specified position (coordinates) */
 #define gotoxy(x,y)           printf("\e[%d;%dH", y, x)
 /* Esc[?25l (lower case L)    - Hide Cursor */
-#define hidecursor()          puts ("\e[?25l")
+#define hidecursor()          fputs ("\e[?25l", stdout)
 /* Esc[?25h (lower case H)    - Show Cursor */
-#define showcursor()          puts ("\e[?25h")
+#define showcursor()          fputs ("\e[?25h", stdout)
 
 /* Esc[Value;...;Valuem       - Set Graphics Mode */
 #define __set_gm(attr,color,val)                                        \

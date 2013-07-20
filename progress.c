@@ -37,18 +37,25 @@ void progress(int percent, int max_width)
 {
 	int i, bar = percent * max_width / 100;
 
-	printf("\r%3d%% %c [", percent, spinner());
+	if (0 == percent)
+		hidecursor();
+
+	fprintf(stderr, "\r%3d%% %c [", percent, spinner());
 
 	for (i = 0; i < max_width; i++) {
 		if (i > bar)
-			putchar(' ');
+			fputc(' ', stderr);
 		else if (i == bar)
-			putchar('>');
+			fputc('>', stderr);
 		else
-			putchar('=');
+			fputc('=', stderr);
 	}
 
-	printf("]");
+	fprintf(stderr, "]");
+	if (100 == percent) {
+		showcursor();
+		fputc('\n', stderr);
+	}
 }
 
 #ifdef UNITTEST
@@ -65,20 +72,21 @@ static void bye(void)
 
 int main(int argc __attribute__((unused)), char const *argv[] __attribute__((unused)))
 {
-	int i, percent = 0;
+	int i, percent, block = 0, num = 85;
 
 	atexit(bye);
 	hidecursor();
 
-	while (percent <= 100) {
+	while (block < num) {
+		percent = block * 100 / num;
 		for (i = 0; i < 10; i++) {
 			progress(percent, MAX_WIDTH);
 			msleep(2);
 		}
-		percent++;
+		block++;
 		msleep(50);
 	}
-	puts("");
+	progress(100, MAX_WIDTH);
 
 	return 0;
 }
