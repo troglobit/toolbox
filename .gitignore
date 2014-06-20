@@ -1,0 +1,14 @@
+*~
+*.d
+*.o
+*.so
+*.map
+ascii
+conf/jansson
+dynamic-linking/daemon
+hex2str
+list-demo
+mroute-show
+progress
+tailq-demo
+
