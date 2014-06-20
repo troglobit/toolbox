@@ -1,12 +1,22 @@
 ;; Dot emacs configuration file
 ;; Joachim Nilsson <troglobit@gmail.com>
-;; 
+;;
 ;; NOTE: This ~/.emacs file is unlikely to work with anything else but the latest
 ;;       bleeding edge Emacs version from CVS.  Dragons ahead!
 ;;
 
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
+;;(load-file "~/.emacs.d/site-lisp/graphviz-dot-mode.el")
+;;(autoload 'cflow-mode "cflow-mode")
+;;(setq auto-mode-alist (append auto-mode-alist
+;;                              '(("\\.cflow$" . cflow-mode))))
+
+;; Location for external plugins
+;;(add-to-list 'load-path "~/.emacs.d/plugins/yasnippet-0.6.1c")
+;;(require 'yasnippet)
+;;(yas/initialize)
+;;(yas/load-directory "~/.emacs.d/plugins/yasnippet-0.6.1c/snippets")
 
 ;;; Initialize external packages, from Debian.
 (let ((startup-file "/usr/share/emacs/site-lisp/debian-startup.el"))
@@ -15,16 +25,49 @@
            (file-readable-p startup-file))
       (progn
         (load-file startup-file)
-        ;; Create a copy of /etc/emacs into /etc/emacs22 and *only* load that dir.
-        (setq debian-emacs-flavor 'emacs22)
-        (setq flavor debian-emacs-flavor)
-        (debian-run-directories (concat "/etc/" (symbol-name debian-emacs-flavor) "/site-start.d")))))
+        (setq debian-emacs-flavor 'emacs)
+        (mapcar '(lambda (f)
+                   (and (not (string= (substring f -3) "/.."))
+                        (file-directory-p f)
+                        (add-to-list 'load-path f)))
+                (directory-files "/usr/share/emacs/site-lisp" t)))))
+
+;; XKCD Reader :-)
+(add-to-list 'load-path (expand-file-name "/home/jocke/Troglobit/emacs-xkcd"))
+(require 'xkcd)
+
+;; Emacs Code Browser
+;;(require 'cedet)
+;;(require 'ecb)
 
 ;;; Autoload Stefan Reichoer's cool psvn
-(require 'psvn)
+;;(require 'psvn)
+
+;;; Autoload magit
+;;(require 'magit)
 
 ;;; Autoload SCO UNIX Cscope
-(require 'xcscope)
+;;(require 'xcscope)
+
+;; Setup GNU Global code indexing
+;;(autoload 'gtags-mode "gtags" "" t)
+;;(setq c-mode-hook
+;;  '(lambda ()
+;;     (gtags-mode 1)))
+
+;; Cedet now part of Emacs
+;;(global-ede-mode 1)                      ; Enable the Project management system
+;;(semantic-load-enable-code-helpers)      ; Enable prototype help and smart completion
+
+;;(push '(font-backend xft x) default-frame-alist)
+
+;; window maximized
+;;(setq default-frame-alist '((top . 1) (left . 1) (width . 132) (height . 40)))
+
+;; Window transparency
+;;(set-frame-parameter (selected-frame) 'alpha '(<active> [<inactive>]))
+;(set-frame-parameter (selected-frame) 'alpha '(90 90))
+;(add-to-list 'default-frame-alist '(alpha 90 90))
 
 ;;; Neat gnome-terminal like F11 toggle between fullscreen and windowed.
 (defun fullscreen ()
@@ -32,11 +75,50 @@
   (set-frame-parameter nil 'fullscreen
                        (if (frame-parameter nil 'fullscreen) nil 'fullboth)))
 
+;; For Emacs 23, or older
+;;(require 'color-theme)
+;;(eval-after-load "color-theme"
+;;  '(progn
+;;     (color-theme-initialize)
+;;     (color-theme-hober)))
+
+;; For Emacs 24, or newer
+(require 'package)
+(add-to-list 'package-archives 
+             '("marmalade" .
+               "http://marmalade-repo.org/packages/"))
+(package-initialize)
+;;(load-theme 'solarized-dark t)
+
+;; Emacs Multi Media System
+;;(require 'emms-setup)
+;;(require 'emms-browser)
+;;(emms-all)
+;;(emms-default-players)
+;;(setq emms-source-file-default-directory "~/Music/")
+
+;;; Convert CamelCase() to camel_case()
+(defun un-camelcase-string (s &optional sep start)
+  "Convert CamelCase string S to lower case with word separator SEP.
+   Default for SEP is an underscore \"_\".
+
+   If third argument START is non-nil, convert words after that
+   index in STRING."
+  (let ((case-fold-search nil))
+    (while (string-match "[A-Z]" s (or start 1))
+      (setq s (replace-match (concat (or sep "_")
+                                     (downcase (match-string 0 s)))
+                             t nil s)))
+    (downcase s)))
+
+;; nuke whitespaces when writing to a file
+;;(add-hook 'before-save-hook 'whitespace-cleanup)
+
 ;; http://info.borland.com/techpubs/jbuilder/jbuilder9/introjb/key_cua.html
 ;; These are the bindings also used in early Borland C++ versions, like 3.0
 ;; the last known "good" release.
 ; function keys
-;; 1help, 2save, 3load, 4goto, 5zoom, 6next, 7split, 8exit!, 9make, 10other, 11hilit, 12undo
+;; 1help, 2save, 3load, 4goto, 5zoom, 6next, 7split, 8exit!, 9make, 10other, 11fullscrn, 12undo
 ;;       C2save as,                                         C9Build
 ;;                                                          S9debug
 ;; emacs: must use command name to allow interactive input
@@ -68,16 +150,24 @@
 
 (global-set-key [f11] 'fullscreen)
 
+(global-set-key (kbd "M-#") 'calculator)
+;;(global-set-key (kbd "C-c c") 'calculator)
 ;;
 (global-set-key [C-prior] 'beginning-of-buffer)
 (global-set-key [C-next] 'end-of-buffer)
 
 ;;; Key binding for switching to next and previous buffer
-(global-set-key '[C-tab] 'bs-cycle-next)
+;;(global-set-key '[C-tab] 'bs-cycle-next)
+;;(global-set-key '[C-S-iso-lefttab] 'bs-cycle-previous)
+(global-set-key '[C-tab] 'other-window)
 (global-set-key '[C-S-iso-lefttab] 'bs-cycle-previous)
 
 ;; Johans hack with dabbrev
 (global-set-key [backtab]    'dabbrev-expand)
+
+;; Fix problem with s-dead-circumflex and other issues where using
+;; compose to get ^ ` et consortes no longer worked for me in Ubuntu.
+(require 'iso-transl)
 
 (defun linux-c-mode ()
   "C mode with adjusted defaults for use with the Linux kernel."
@@ -87,9 +177,34 @@
   (setq tab-width 8)
   (setq indent-tabs-mode t)
   (setq c-basic-offset 8))
-  
+
 (setq auto-mode-alist (cons '("/usr/src/linux.*/.*\\.[ch]$" . linux-c-mode)
                             auto-mode-alist))
+
+(c-add-style "openbsd"
+             '("bsd"
+               (indent-tabs-mode . t)
+               (defun-block-intro . 8)
+               (statement-block-intro . 8)
+               (statement-case-intro . 8)
+               (substatement-open . 4)
+               (substatement . 8)
+               (arglist-cont-nonempty . 4)
+               (inclass . 8)
+               (knr-argdecl-intro . 8)))
+
+(c-add-style "mrouted"
+             '("ellemtel"
+               (c-basic-offset . 4)))
+
+ (c-add-style "microsoft"
+              '("stroustrup"
+                (c-offsets-alist
+                 (innamespace . -)
+                 (inline-open . 0)
+                 (inher-cont . c-lineup-multi-inher)
+                 (arglist-cont-nonempty . +)
+                 (template-args-cont . +))))
 
 ;; Add color to a shell running in emacs 'M-x shell'
 (autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
@@ -100,23 +215,7 @@
 ;; ============================
 
 ;; mouse button one drags the scroll bar
-(global-set-key [vertical-scroll-bar down-mouse-1] 'scroll-bar-drag)
-
-;; setup scroll mouse settings
-(defun up-slightly () (interactive) (scroll-up 5))
-(defun down-slightly () (interactive) (scroll-down 5))
-(global-set-key [mouse-4] 'down-slightly)
-(global-set-key [mouse-5] 'up-slightly)
-
-(defun up-one () (interactive) (scroll-up 1))
-(defun down-one () (interactive) (scroll-down 1))
-(global-set-key [S-mouse-4] 'down-one)
-(global-set-key [S-mouse-5] 'up-one)
-
-(defun up-a-lot () (interactive) (scroll-up))
-(defun down-a-lot () (interactive) (scroll-down))
-(global-set-key [C-mouse-4] 'down-a-lot)
-(global-set-key [C-mouse-5] 'up-a-lot)
+;;(global-set-key [vertical-scroll-bar down-mouse-1] 'scroll-bar-drag)
 
 ;; ============================
 ;; Display
@@ -133,15 +232,15 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Pgup/dn will return exactly to the starting point.
-(setq scroll-preserve-screen-position 1)
+;;(setq scroll-preserve-screen-position 1)
 
 ;; don't automatically add new lines when scrolling down at
 ;; the bottom of a buffer
 (setq next-line-add-newlines nil)
 
 ;; scroll just one line when hitting the bottom of the window
-(setq scroll-step 1)
-(setq scroll-conservatively 1)
+;;(setq scroll-step 1)
+;;(setq scroll-conservatively 1)
 
 ;; format the title-bar to always include the buffer name
 (setq frame-title-format "emacs - %b")
@@ -149,9 +248,6 @@
 ;; show a menu only when running within X (save real estate when
 ;; in console)
 (menu-bar-mode (if window-system 1 -1))
-
-;; turn on word wrapping in text mode
-(add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 ;; replace highlighted text with what I type rather than just
 ;; inserting at a point
@@ -165,6 +261,15 @@
 
 ;; highlight incremental search
 (setq search-highlight t)
+
+;; Fully redraw the display before it processes queued input events.
+;; http://www.masteringemacs.org/articles/2011/10/02/improving-performance-emacs-display-engine/
+(setq redisplay-dont-pause t)
+
+;; Disable question about killing a buffer with a live process attached to it
+(setq kill-buffer-query-functions
+  (remq 'process-kill-buffer-query-function
+         kill-buffer-query-functions))
 
 ;; ===========================
 ;; Custom Functions
@@ -203,9 +308,9 @@
   (insert " */\n"))
 
 (defun insert-file-header () (interactive)
-  (insert "/* \\\\/ Westermo OnTime - <FILE DESCRIPTION>\n")
+  (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2008  Westermo OnTime AS\n")
+  (insert " * Copyright (C) 2014  Westermo Teleindustri AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -214,9 +319,9 @@
   (insert " */\n"))
 
 (defun insert-include-body () (interactive)
-  (insert "/* \\\\/ Westermo OnTime - <FILE DESCRIPTION>\n")
+  (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2008  Westermo OnTime AS\n")
+  (insert " * Copyright (C) 2014  Westermo Teleindustri AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -224,52 +329,109 @@
   (insert " *\n")
   (insert " */\n")
   (insert "\n")
-  (insert "#ifndef __FILE_H__\n")
-  (insert "#define __FILE_H__\n")
+  (insert "#ifndef FILE_H_\n")
+  (insert "#define FILE_H_\n")
   (insert "\n")
-  (insert "#endif /* __FILE_H__ */\n"))
+  (insert "#endif /* FILE_H_ */\n"))
 
 (defun insert-file-footer () (interactive)
   (insert "/**\n")
   (insert " * Local Variables:\n")
-  (insert " *  compile-command: \"gcc -g -I../include -o unittest -DUTEST=1 -DUNITTEST kill_procname.c\"\n")
   (insert " *  version-control: t\n")
-  (insert " *  kept-new-versions: 2\n")
+  (insert " *  indent-tabs-mode: nil\n")
   (insert " *  c-file-style: \"ellemtel\"\n")
   (insert " * End:\n")
   (insert " */\n"))
 
+(defun insert-isc-license () (interactive)
+  (insert "/*\n")
+  (insert " *\n")
+  (insert " * Copyright (c) 2014  Joachim Nilsson <troglobit@gmail.com>\n")
+  (insert " *\n")
+  (insert " * Permission to use, copy, modify, and/or distribute this software for any\n")
+  (insert " * purpose with or without fee is hereby granted, provided that the above\n")
+  (insert " * copyright notice and this permission notice appear in all copies.\n")
+  (insert " *\n")
+  (insert " * THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES\n")
+  (insert " * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF\n")
+  (insert " * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR\n")
+  (insert " * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES\n")
+  (insert " * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN\n")
+  (insert " * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF\n")
+  (insert " * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.\n")
+  (insert " */\n"))
+
+(defun insert-wmo-signed-off () (interactive)
+  (insert "Signed-off-by: Joachim Nilsson <joachim.nilsson@westermo.se>\n"))
+
+(defun insert-signed-off () (interactive)
+  (insert "Signed-off-by: Joachim Nilsson <troglobit@gmail.com>\n"))
+
 ;; insert functions
 (global-unset-key "\C-t")
+(global-set-key "\C-t\C-l" 'insert-isc-license)     ; Alternate top
+(global-set-key "\C-t\C-w" 'insert-wmo-signed-off)
+(global-set-key "\C-t\C-s" 'insert-signed-off)
 (global-set-key "\C-t\C-t" 'insert-file-header)     ; Top
 (global-set-key "\C-t\C-b" 'insert-file-footer)     ; Bottom
 (global-set-key "\C-t\C-h" 'insert-function-header) ; Header
 (global-set-key "\C-t\C-i" 'insert-include-body)    ; Include
 
+;; Override buffer listing with new ibuffer
+(global-set-key (kbd "C-x C-b") 'ibuffer)
 
+;; Bind C-c m to magit-statis
+(global-set-key (kbd "C-c m") 'magit-status)
+
+;; Transparency, from http://emacs-fu.blogspot.se/2009/02/transparent-emacs.html
+(defun djcb-opacity-modify (&optional dec)
+  "modify the transparency of the emacs frame; if DEC is t,
+    decrease the transparency, otherwise increase it in 10%-steps"
+  (let* ((alpha-or-nil (frame-parameter nil 'alpha)) ; nil before setting
+          (oldalpha (if alpha-or-nil alpha-or-nil 100))
+          (newalpha (if dec (- oldalpha 10) (+ oldalpha 10))))
+    (when (and (>= newalpha frame-alpha-lower-limit) (<= newalpha 100))
+      (modify-frame-parameters nil (list (cons 'alpha newalpha))))))
+
+ ;; C-8 will increase opacity (== decrease transparency)
+ ;; C-9 will decrease opacity (== increase transparency
+ ;; C-0 will returns the state to normal
+(global-set-key (kbd "C-8") '(lambda()(interactive)(djcb-opacity-modify)))
+(global-set-key (kbd "C-9") '(lambda()(interactive)(djcb-opacity-modify t)))
+(global-set-key (kbd "C-0") '(lambda()(interactive)
+                               (modify-frame-parameters nil `((alpha . 100)))))
 
 ;; ===========================
 ;; Emacs customized settings
 ;; ===========================
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(all-christian-calendar-holidays t)
- '(c-default-style (quote ((c-mode . "ellemtel") (c++-mode . "ellemtel") (java-mode . "java") (awk-mode . "awk") (other . "gnu"))))
+ '(ansi-color-names-vector [solarized-bg red green yellow blue magenta cyan solarized-fg])
+ '(auto-hscroll-mode t)
+ '(baud-rate 115200)
+ '(c-default-style (quote ((c-mode . "linux") (c++-mode . "ellemtel") (java-mode . "java") (awk-mode . "awk") (other . "gnu"))))
  '(c-max-one-liner-length 132)
+ '(calendar-christian-all-holidays-flag t)
+ '(calendar-mark-holidays-flag t)
  '(calendar-week-start-day 1)
  '(case-fold-search t)
  '(case-replace t)
  '(column-number-mode t)
- '(compilation-auto-jump-to-first-error t)
- '(compilation-scroll-output (quote first-error))
+ '(compilation-auto-jump-to-first-error nil)
+ '(compilation-scroll-output t)
+ '(compilation-window-height 15)
  '(confirm-kill-emacs (quote y-or-n-p))
  '(cua-enable-cua-keys (quote shift))
  '(cua-highlight-region-shift-only t)
+ '(cua-mode t nil (cua-base))
+ '(custom-enabled-themes (quote (tango-dark)))
+ '(custom-safe-themes (quote ("72cc9ae08503b8e977801c6d6ec17043b55313cda34bcf0e6921f2f04cf2da56" "d2622a2a2966905a5237b54f35996ca6fda2f79a9253d44793cfe31079e3c92b" "501caa208affa1145ccbb4b74b6cd66c3091e41c5bb66c677feda9def5eab19c" default)))
  '(desktop-save-mode t)
- '(diff-default-read-only t)
+ '(diff-default-read-only nil)
  '(diff-mode-hook (quote (diff-make-unified)))
  '(diff-switches "-u")
  '(diff-update-on-the-fly nil)
@@ -278,27 +440,45 @@
  '(display-time-day-and-date nil)
  '(display-time-default-load-average nil)
  '(display-time-mail-file (quote none))
- '(ecb-directories-menu-user-extension-function nil)
- '(ecb-history-menu-user-extension-function nil)
- '(ecb-methods-menu-user-extension-function nil)
- '(ecb-options-version "2.27")
- '(ecb-sources-menu-user-extension-function nil)
+ '(ecb-directories-menu-user-extension-function (quote ignore))
+ '(ecb-history-menu-user-extension-function (quote ignore))
+ '(ecb-layout-name "leftright2")
+ '(ecb-methods-menu-user-extension-function (quote ignore))
+ '(ecb-options-version "2.32")
+ '(ecb-primary-secondary-mouse-buttons (quote mouse-1--mouse-2))
+ '(ecb-sources-menu-user-extension-function (quote ignore))
+ '(ecb-tip-of-the-day nil)
+ '(ecb-vc-supported-backends (quote ((ecb-vc-dir-managed-by-CVS . ecb-vc-state) (ecb-vc-dir-managed-by-RCS . ecb-vc-state) (ecb-vc-dir-managed-by-SVN . ecb-vc-state))))
+ '(ecb-windows-width 0.13)
+ '(ediff-merge-split-window-function (quote split-window-vertically))
  '(erc-nick "troglobit")
  '(erc-server "irc.labs.westermo.se")
  '(erc-user-full-name "Joachim Nilsson")
  '(european-calendar-style t)
+ '(fci-rule-color "#eee8d5")
+ '(fill-column 72)
  '(gdb-same-frame t)
  '(gdb-show-main t)
  '(global-auto-revert-mode t)
+ '(global-hl-line-mode nil)
+ '(hide-ifdef-lines t)
+ '(hide-ifdef-shadow t)
+ '(ido-enabled (quote both) nil (ido))
+ '(ido-everywhere t)
+ '(ido-mode (quote both) nil (ido))
  '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
+ '(make-backup-files nil)
  '(mark-holidays-in-calendar t)
+ '(org-support-shift-select t)
  '(pc-select-selection-keys-only t)
- '(pc-selection-mode t nil (pc-select))
+ '(pc-selection-mode t)
+ '(safe-local-variable-values (quote ((c-style . pluto) (c-indent-style . "ellemtel"))))
  '(save-place t nil (saveplace))
  '(scroll-bar-mode (quote right))
+ '(server-done-hook (quote (delete-frame)))
  '(server-mode t)
  '(server-window (quote switch-to-buffer-other-frame))
  '(sh-basic-offset 8)
@@ -308,8 +488,11 @@
  '(text-mode-hook (quote (turn-on-auto-fill text-mode-hook-identify)))
  '(todoo-collapse-items t)
  '(todoo-indent-column 0)
- '(transient-mark-mode t)
+ '(tool-bar-mode nil)
+ '(tooltip-mode nil)
+ '(truncate-lines t)
  '(uniquify-buffer-name-style (quote forward) nil (uniquify))
+ '(vc-annotate-background "white")
  '(vc-consult-headers nil)
  '(vc-dired-recurse nil)
  '(vc-dired-terse-display nil)
@@ -319,10 +502,8 @@
  '(which-function-mode t)
  '(x-select-enable-clipboard t))
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
- '(default ((t (:stipple nil :background "#ffffff" :foreground "#000000" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 83 :width normal :foundry "unknown" :family "Liberation Mono")))))
-
-(put 'downcase-region 'disabled nil)
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Source Code Pro" :foundry "adobe" :slant normal :weight normal :height 98 :width normal)))))
