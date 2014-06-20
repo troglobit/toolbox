@@ -1,6 +1,6 @@
 /* Simple CRC test
  *
- * Copyright (C) 2005 Joachim Nilsson <jocke@vmlinux.org>
+ * Copyright (C) 2005-2014  Joachim Nilsson <troglobit@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

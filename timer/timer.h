@@ -1,6 +1,6 @@
 /* Implementation of "Implementing Software Timers" by Don Libes
  *
- * Copyright (C) 2006, 2007 Joachim Nilsson <jocke@vmlinux.org>
+ * Copyright (C) 2006-2014  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

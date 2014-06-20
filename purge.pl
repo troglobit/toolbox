@@ -4,7 +4,7 @@
 # 
 # 	~/purge.pl LiYan
 #
-# Copyleft (L) 2005 Joachim Nilsson <jocke()vmlinux!org>
+# Copyright (C) 2005-2014  Joachim Nilsson <troglobit@gmail.com>
 #
 
 $user=$ARGV[0];
