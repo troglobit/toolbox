@@ -40,7 +40,7 @@ function setup()
         printf "Creating new veth pair %s<-->%s in %s bridge %s with address %s\n" $tap $peer $ns $br $ifaddr
 
         # create a port pair
-        ip link add $tap type veth peer name br-$tap
+        ip link add $tap type veth peer name $peer
 
         # attach one side to Linux bridge
         brctl addif $br $peer
@@ -133,18 +133,23 @@ setup ns4 tap6 $BRIDGE3 172.16.3.2/24
 
 ### Start test
 sleep 2
-# Ping multicast group with big enough TTL
-ip netns exec ns1 ping -I tap1 -t 10 225.1.2.3 &
 
-# Start multicast router daemon
-ip netns exec ns2 $routed &
-ip netns exec ns3 $routed &
+# Start multicast router daemons
+#ip netns exec ns2 $routed &
+lxc-start -n lxc2 --share-net ns2 "$routed" &
+#ip netns exec ns3 $routed &
+lxc-start -n lxc3 --share-net ns3 "$routed" &
 
 # Wait for daemons to start
 sleep 5
 
+# Ping multicast group with big enough TTL
+#ip netns exec ns1 ping -I tap1 -t 10 225.1.2.3 &
+lxc-start -n lxc1 --share-net ns1 'ping -I tap1 -t 10 225.1.2.3' &
+
 # Join multicast group in right-most NS
-ip netns exec ns4 mcjoin -i tap6 -r 10 225.1.2.3 &
+#ip netns exec ns4 mcjoin -i tap6 -r 10 225.1.2.3 &
+lxc-start -n lxc4 --share-net ns4 'mcjoin -i tap6 -r 10 225.1.2.3' &
 
 # Listen for the multicast data
 ip netns exec ns4 tcpdump -i tap6 -n -v icmp
