@@ -434,6 +434,9 @@
 (global-set-key "\C-x44" 'langtool-show-message-at-point)
 (global-set-key "\C-x4c" 'langtool-correct-buffer)
 
+;; Setup mscgen - http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-mscgen.html
+(setq exec-path (append exec-path '("/usr/bin/mscgen")))
+
 ;; All settings activated and saved in the Options menu Emacs stores here
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -467,7 +470,6 @@
  '(diff-switches "-u")
  '(diff-update-on-the-fly nil)
  '(dired-ls-F-marks-symlinks t)
- '(display-battery-mode t)
  '(display-time-24hr-format t)
  '(display-time-day-and-date nil)
  '(display-time-default-load-average nil)
@@ -506,6 +508,7 @@
  '(make-backup-files nil)
  '(mark-holidays-in-calendar t)
  '(menu-bar-mode nil)
+ '(org-babel-load-languages (quote ((python . t) (mscgen . t) (dot . t))))
  '(org-support-shift-select t)
  '(pc-select-selection-keys-only t)
  '(pc-selection-mode t)
