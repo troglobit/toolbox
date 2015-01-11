@@ -11,4 +11,7 @@ list-demo
 mroute-show
 progress
 tailq-demo
-
+/conf/confuse
+/mcjoin/mcjoin
+/mcjoin*.changes
+/mcjoin*.deb
