@@ -1,0 +1,19 @@
+// Simple dot event diagram example                                      -*-dot-*-
+//
+// The graphviz-dot-mode in Emacs works with .dot files.  It's part of
+// the Debian emacs-goodies-el package.  See also the author's page:
+// http://users.skynet.be/ppareit/projects/graphviz-dot-mode/graphviz-dot-mode.html
+//
+// C-c c  -- compile graph
+// C-c p  -- preview graph
+//
+
+digraph structs {
+        node [shape=record];
+        struct1 [label="<f0> left |<f1> middle |<f2> right"];
+        struct2 [label="<f0> one |<f1> two"];
+        struct3 [label="hello\nworld | { b | {c |<here> d| e} | f} | g | h"];
+
+        struct1:f1 -> struct2:f0;
+        struct1:f2 -> struct3:here;
+}
