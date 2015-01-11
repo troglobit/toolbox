@@ -2,7 +2,7 @@
 #+AUTHOR: Joachim Nilsson
 # This .org-file requires that you have mscgen installed
 
-* Introduction
+** Introduction
 
 Help!
 
@@ -20,7 +20,7 @@ or
 http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-mscgen.html
 to try this thing out :-)
 
-* MSC for some fictional process
+** MSC for some fictional process
 
 #+begin_src mscgen :file chart.png
 msc {
@@ -47,4 +47,5 @@ msc {
 #+RESULTS:
 [[file:chart.png]]
 
+[[https://raw.githubusercontent.com/troglobit/toolbox/master/chart.png][file:chart.png]]
 
