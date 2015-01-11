@@ -1,0 +1,50 @@
+#+TITLE:  Swimlanes Example with Emacs org-mode
+#+AUTHOR: Joachim Nilsson
+# This .org-file requires that you have mscgen installed
+
+* Introduction
+
+Help!
+
+Don't worry, start by installing =mscgen= on your system.  Then
+add some magic Lisp code to your =~/.emacs=.
+
+If you have a =custom-set-variables= section, then simply add the
+following to it:
+
+: '(org-babel-load-languages (quote ((python . t) (mscgen . t) (dot . t))))
+
+Then you're set to go. Check out the example at
+http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-mscgen.html
+or
+http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-mscgen.html
+to try this thing out :-)
+
+* MSC for some fictional process
+
+#+begin_src mscgen :file chart.png
+msc {
+  hscale = "2";
+
+  a,b,c;
+
+  a->b [ label = "ab()" ] ;
+  b->c [ label = "bc(TRUE)"];
+  c=>c [ label = "process(1)" ];
+  c=>c [ label = "process(2)" ];
+  ...;
+  c=>c [ label = "process(n)" ];
+  c=>c [ label = "process(END)" ];
+  a<<=c [ label = "callback()"];
+  ---  [ label = "If more to run", ID="*" ];
+  a->a [ label = "next()"];
+  a->c [ label = "ac1()\nac2()"];
+  b<-c [ label = "cb(TRUE)"];
+  b->b [ label = "stalled(...)"];
+  a<-b [ label = "ab() = FALSE"];
+}
+#+end_src
+#+RESULTS:
+[[file:chart.png]]
+
+
