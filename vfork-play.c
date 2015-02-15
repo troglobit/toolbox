@@ -63,7 +63,7 @@ static int callback(arg_t *arg, int event, void *foo)
 
 static void sigsegv_cb(int signo)
 {
-	warnx("Child caused segfault.");
+	warnx("PID %d caused segfault.", getpid());
 	exit(-1);
 }
 
