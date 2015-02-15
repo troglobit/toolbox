@@ -1,4 +1,4 @@
-/* Playing with clone(2)
+/* Playing with vfork(2)
  *
  * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -40,22 +40,21 @@ static arg_t arg = {
 	.ptr = NULL
 };
 
-static int callback(void *arg)
+static int callback(arg_t *arg, int event, void *foo)
 {
-	arg_t *data = (arg_t *)arg;
-	arg_t *foo  = (arg_t *)NULL;
+	arg_t *event_arg  = (arg_t *)foo;
 
-	printf("child: got magic %d and ptr %p, stack-top %p\n",
-	       data->magic, data->ptr, &data + sizeof(arg_t) + sizeof(void *));
+	printf("child: got magic %d and ptr %p, with event %d and event arg %p\n",
+	       arg->magic, arg->ptr, event, event_arg);
 
-	/* With CLONE_VM the child and parent share heap, but the below
+	/* With VFORK_VM the child and parent share heap, but the below
 	 * segfault cannot be handled */
-	data->magic = 7331;
-	data->ptr   = &data;
+	arg->magic = 7331;
+	arg->ptr   = &event_arg;
 
 	/* Cause segfault! */
 #if DO_SEGFAULT == 1
-	foo->ptr   = data->ptr;
+	event_arg->ptr = event_arg->ptr;
 	printf("child: segfaulting failed!\n");
 #endif
 
@@ -71,21 +70,16 @@ static void sigsegv_cb(int signo)
 int main(int argc, char *argv[])
 {
 	int   status = 0;
-        char *stack, *stack_top;
         pid_t pid;
 
 	signal(SIGSEGV, sigsegv_cb);
 
-        stack = malloc(PAGE_SIZE);
-        if (!stack)
-                err(1, "malloc");
-        stack_top = stack + PAGE_SIZE; /* Assume stack grows downward */
-
-        pid = clone(callback, stack_top, CLONE_VFORK | SIGCHLD, &arg);
+        pid = vfork();
         if (-1 == pid)
-                err(1, "clone");
-
-	free(stack);
+                err(1, "vfork");
+	if (!pid)
+		return callback(&arg, 6137, NULL);
+	
         if (waitpid(pid, &status, 0) == -1)
                 err(1, "waitpid");
 
@@ -99,7 +93,7 @@ int main(int argc, char *argv[])
 
 /**
  * Local Variables:
- *  compile-command: "make clone-play && ./clone-play"
+ *  compile-command: "make vfork-play && ./vfork-play"
  *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
