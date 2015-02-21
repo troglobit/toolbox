@@ -1,6 +1,6 @@
-/* Simple demo of BSD sys/queue.h linked lists API.
+/* Simple demo of BSD sys/queue.h LIST API.
  *
- * Copyright (c) 2012  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,52 +19,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/queue.h>
+//#include <sys/queue.h>
+#include "queue.h"
 
-#define MAX_NODES 10
-#define MALLOC(p,sz) p = malloc(sz); if (!p) errx(1, "Failed allocating RAM: %s\n", strerror(errno));
-typedef struct node {
-	LIST_ENTRY(node) link;
+#define MAX_PEERS 10
+#define MALLOC(p,sz)							\
+	p = malloc(sz);							\
+	if (!p)								\
+		errx(1, "Failed allocating LIST peer: %s\n", strerror(errno));
+
+typedef struct peer {
+	LIST_ENTRY(peer) link;
 	int data;
-} node_t;
+} peer_t;
 
-LIST_HEAD(, node) node_list = LIST_HEAD_INITIALIZER();
+typedef struct {
+	LIST_HEAD(peer_list, peer) peers;
+} torrent_t;
+
 
 int main (void)
 {
 	int i;
-	node_t *entry, *tmp;
+	peer_t *entry, *tmp;
+	torrent_t torrent;
 
-//	LIST_INIT(&node_list);
+	printf("Creating LIST list...\n");
+	LIST_INIT(&torrent.peers);
 
-	printf("Creating linked list...\n");
-
-	for (i = 0; i < MAX_NODES; i++) {
+	for (i = 0; i < MAX_PEERS; i++) {
 		MALLOC(entry, sizeof(*entry));
 		entry->data = i + 1;
-		printf("  Creating entry %d\n", i);
-		LIST_INSERT_HEAD(&node_list, entry, link);
+		printf("  Creating entry %d\n", i + 1);
+		LIST_INSERT_HEAD(&torrent.peers, entry, link);
 	}
 
 	printf("Linked list created. Iterating with foreach():\n");
 
 	i = 0;
-	LIST_FOREACH(entry, &node_list, link) {
+	LIST_FOREACH(entry, &torrent.peers, link) {
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 	}
 
-	printf("Removing all entries, cleaning up...\n");
-
 	i = 0;
-#if LIST_FOREACH_SAFE  /* Actual BSD systems with working sys/queue.h */
-	LIST_FOREACH_SAFE(entry, &node_list, link, tmp) {
+#ifdef LIST_FOREACH_SAFE /* Actual BSD systems with working sys/queue.h */
+	printf("Removing all entries, cleaning up using LIST_FOREACH_SAFE() ...\n");
+	LIST_FOREACH_SAFE(entry, &torrent.peers, link, tmp) {
 		LIST_REMOVE(entry, link);
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
 	}
 #else
-	while (!LIST_EMPTY(&node_list)) {
-		entry = LIST_FIRST(&node_list);
+	printf("Removing all entries, cleaning up using !LIST_EMPTY() ...\n");
+	while (!LIST_EMPTY(&torrent.peers)) {
+		entry = LIST_FIRST(&torrent.peers);
 		LIST_REMOVE(entry, link);
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
@@ -77,8 +85,9 @@ int main (void)
 
 /**
  * Local Variables:
+ *  compile-command: "make list-demo && ./list-demo"
  *  version-control: t
  *  indent-tabs-mode: t
- *  c-file-style: "bsd"
+ *  c-file-style: "linux"
  * End:
  */
