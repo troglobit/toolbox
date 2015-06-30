@@ -118,7 +118,7 @@ int daemonize (char *output)
    freopen(output ? : "/dev/console", "w", stderr);
 #endif
 
-   /* Move current directory off mounted file system */
+   /* Try moving the current directory off mounted file system */
    chdir ("/");
    /* Clear any inherited file mode creation mask */
    umask (0);
