@@ -1,4 +1,4 @@
-/* Client-C
+/* Simple-C
  *
  * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
  *
@@ -26,21 +26,32 @@
 
 int main(void)
 {
-	int i, ack, id = api_subscribe(NULL, 5000, &ack);
+	int timeout = 10;
+	int i, ack, id;
 
+	while (api_ping()) {
+		if (!timeout)
+			return 1;
+
+		warn("Server not yet there");
+		sleep(timeout--);
+	}
+	warnx("Server available.");
+
+	id = api_subscribe(NULL, 5000, &ack);
 	if (id < 0)
 		err(1, "Failed subscribing");
 
 	for (i = 0; i < 10; i++) {
-		printf("C: Next ack: %d\n", ack);
+		warnx("Next ack: %d", ack);
 		if (api_kick(id, 5000, ack, &ack) < 0)
 			warn("Something failed");
 
-		printf("C: Hello\n");
+		warnx("Hello");
 		sleep(1);
 	}
 
-	printf("C: Exiting ...\n");
+	warnx("Exiting ...");
 
 	return api_unsubscribe(id, ack);
 }

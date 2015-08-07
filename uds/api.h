@@ -32,6 +32,7 @@ typedef struct {
 	int    ack, next_ack;
 } api_t;
 
+int api_ping        (void);
 int api_subscribe   (char *label, int timeout, int *next_ack);     /* Returns ID or -errno */
 int api_unsubscribe (int id, int ack);                             /* Returns 0 if OK, or errno */
 int api_kick        (int id, int timeout, int ack, int *next_ack); /* Returns 0 while OK, or errno */

@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,7 +42,7 @@ int api_init(int server)
 		.sun_path   = API_PATH,
 	};
 
-	sd = socket(AF_UNIX, SOCK_STREAM, 0);
+	sd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (-1 == sd)
 		return -1;
 
@@ -55,7 +56,8 @@ int api_init(int server)
 			goto error;
 	} else {
 		if (connect(sd, (struct sockaddr*)&sun, sizeof(sun)) == -1)
-			goto error;
+			if (EINPROGRESS != errno)
+				goto error;
 	}
 
 	return sd;
@@ -63,6 +65,40 @@ int api_init(int server)
 error:
 	close(sd);
 	return -1;
+}
+
+static int sock_poll(int sd, int ev)
+{
+	struct pollfd pfd;
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd     = sd;
+	pfd.events = ev;
+	if (poll(&pfd, 1, 1000) == 1)
+		return 1;
+
+	return 0;
+}
+
+/* Used by client to check if server is up */
+int api_ping(void)
+{
+	int sd;
+	fd_set fdset;
+	struct timeval tv;
+	int so_error = ENOTCONN;
+	socklen_t len = sizeof(so_error);
+
+	sd = api_init(0);
+	if (-1 == sd)
+		return 1;
+
+	if (sock_poll(sd, POLLIN | POLLOUT))
+		getsockopt(sd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+	close(sd);
+
+	return errno != 0;
 }
 
 static int api_do(int cmd, int id, char *label, int timeout, int ack, int *next)
@@ -89,12 +125,16 @@ static int api_do(int cmd, int id, char *label, int timeout, int ack, int *next)
 	}
 
 	printf("API: Sending to D ...\n");
-	if (write(sd, &a, sizeof(a)) != sizeof(a))
-		goto error;
+	if (sock_poll(sd, POLLOUT)) {
+		if (write(sd, &a, sizeof(a)) != sizeof(a))
+			goto error;
+	}
 
 	printf("API: Receiving from D ...\n");
-	if (read(sd, &a, sizeof(a)) != sizeof(a))
-		goto error;
+	if (sock_poll(sd, POLLIN)) {
+		if (read(sd, &a, sizeof(a)) != sizeof(a))
+			goto error;
+	}
 
 	*next = a.next_ack;
 	printf("API: All OK, next ACK %d!\n", *next);

@@ -16,6 +16,7 @@
  */
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
@@ -24,48 +25,64 @@
 static int id = 1337;
 extern int api_init(int server);
 
+static int set_blocking(int fd)
+{
+	int arg = fcntl(fd, F_GETFL, NULL);
+
+	if (arg == -1)
+		return -1;
+
+	return fcntl(fd, F_SETFL, arg & ~O_NONBLOCK);
+}
+
 int main(void)
 {
 	int sd = api_init(1);
 
 	if (-1 == sd)
 		err(1, "Failed starting server");
+	set_blocking(sd);
 
 	while (1) {
 		int     c = accept(sd, NULL, NULL);
 		api_t   a;
 		ssize_t num;
 
-		printf("D: New client connecting!\n");
+		if (-1 == c) {
+			warn("Failed creating client");
+			continue;
+		}
+
+		warnx("New client connecting!");
 		num = read(c, &a, sizeof(a));
 		if (num <= 0) {
 			close(c);
 			if (num < 0)
-				err(1, "Failed reading client request");
+				warn("Failed reading client request");
 		
 			continue;
 		}
 
-		printf("D: Client sent cmd %d\n", a.cmd);
+		warnx("Client sent cmd %d", a.cmd);
 		switch (a.cmd) {
 		case API_SUBSCRIBE_CMD:
-			printf("D: Hello %s, pid %d.  Registering ...\n", a.label, a.pid);
+			warnx("Hello %s, registering pid %d.", a.label, a.pid);
 			a.id       = id++;
 			a.next_ack = 42;
 			break;
 
 		case API_UNSUBSCRIBE_CMD:
-			printf("D: Goodbye pid %d ...\n", a.pid);
+			warnx("Goodbye pid %d.", a.pid);
 			break;
 
 		case API_KICK_CMD:
-			printf("D: How do you do id:%d, pid %d?  ACK should be %d, is %d ...\n",
-			       a.id, a.pid, a.next_ack, a.ack);
+			warnx("How do you do pid %d(%d)?  ACK should be %d, is %d",
+			       a.pid, a.id, a.next_ack, a.ack);
 			a.next_ack = a.ack + 2;
 			break;
 
 		default:
-			printf("D: Invalid command.\n");
+			warnx("Invalid command %d", a.cmd);
 			break;
 		}
 
@@ -73,7 +90,7 @@ int main(void)
 			warn("Failed sending reply to client");
 
 		close(c);
-		printf("D: Preparing for next client ...\n");
+		warnx("Preparing for next client.");
 	}
 
 	return 0;
