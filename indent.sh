@@ -11,7 +11,6 @@ indent -linux \
 --preserve-mtime \
 --break-after-boolean-operator \
 --blank-lines-after-procedures \
---blank-before-sizeof \
 --dont-break-function-decl-args \
 --dont-break-procedure-type \
 --leave-preprocessor-space \
