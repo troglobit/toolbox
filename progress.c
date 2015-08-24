@@ -17,31 +17,58 @@
 
 #include <limits.h>		/* INT_MAX */
 #include <stdio.h>
+#include <string.h>
 
 #include "conio.h"
 
-static char spinner(void)
-{
-	static int i = INT_MAX;
-	char *states = "|/-\\";
-//	char *states = ".oOo";
-//	char *states = ".oO°Oo.";
-//	char *states = "v<^>";
-//	char *states = ".oO@*";
+#define SPINNER_THROB   ".oOo"
+#define SPINNER_PULSAR  ".oO°Oo."
+#define SPINNER_ARROW   "v<^>"
+#define SPINNER_STAR    ".oO@*"
+#define SPINNER_DEFAULT "|/-\\"
 
-	/* Subtract to get clockwise spinning. */
-	return states[i-- % 4];	/* % Number of states */
+static char spinner(char *style)
+{
+	size_t num;
+	static unsigned int i = 0;
+
+	if (!style)
+		style = SPINNER_DEFAULT;
+	num = strlen(style);
+
+	return style[i++ % num]; /* % Number of states in style */
 }
 
+/**
+ * progress - Advanced ASCII progress bar with spinner
+ * @percent: Start first call with this set to 0, end with 100
+ * @max_width: Max width of progress bar, in total characters.
+ *
+ * This function draws an advanced ASCII progressbar at the current
+ * line.  It always start from the first column.
+ *
+ * The progress bar will hide the cursor if started with @percent 0 and
+ * show it again at the end, when called with @percent 100.
+ *
+ * While being called with the same percentage the spinner will spin,
+ * to show the user the process hasn't frozen.
+ *
+ * If the output TTY cannot interpret control characters, like \r, it is
+ * advised to instead used the progress_simple() function.
+ */
 void progress(int percent, int max_width)
 {
-	int i, bar = percent * max_width / 100;
+	int i, bar;
+
+	/* Adjust for progress bar overhead */
+	max_width -= 10;
 
 	if (0 == percent)
 		hidecursor();
 
-	fprintf(stderr, "\r%3d%% %c [", percent, spinner());
+	fprintf(stderr, "\r%3d%% %c [", percent, spinner(NULL));
 
+	bar = percent * max_width / 100;
 	for (i = 0; i < max_width; i++) {
 		if (i > bar)
 			fputc(' ', stderr);
@@ -70,7 +97,7 @@ static void bye(void)
 	showcursor();
 }
 
-int main(int argc __attribute__((unused)), char const *argv[] __attribute__((unused)))
+int main(void)
 {
 	int i, percent, block = 0, num = 85;
 
@@ -81,10 +108,10 @@ int main(int argc __attribute__((unused)), char const *argv[] __attribute__((unu
 		percent = block * 100 / num;
 		for (i = 0; i < 10; i++) {
 			progress(percent, MAX_WIDTH);
-			msleep(2);
+			msleep(90);
 		}
 		block++;
-		msleep(50);
+		msleep(1);
 	}
 	progress(100, MAX_WIDTH);
 
