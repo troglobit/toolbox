@@ -114,7 +114,7 @@ static int api_do(int cmd, int id, char *label, int timeout, int ack, int *next)
 	if (-1 == sd)
 		return errno;
 
-		printf("API: Got cmd %d\n", cmd);
+	printf("API: Got cmd %d\n", cmd);
 	if (API_SUBSCRIBE_CMD == cmd) {
 		if (!label || !label[0])
 			label = __progname;
