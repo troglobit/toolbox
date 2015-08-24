@@ -16,19 +16,16 @@
 #define            _ARG2(_0, _1, _2, ...) _2
 #define NARG2(...) _ARG2(__VA_ARGS__, 2, 1, 0)
 
-#define  _PRINT_ARGS_1(NAME, a) a, NAME ## _default_fp()
-#define  _PRINT_ARGS_2(NAME, a, b) a, b
-#define __PRINT_ARGS(NAME, N, ...)      _PRINT_ARGS_ ## N (NAME, __VA_ARGS__)
-#define  _PRINT_ARGS(NAME, N, ...)     __PRINT_ARGS(NAME, N, __VA_ARGS__)
-#define   PRINT_ARGS(NAME, ...)    NAME(_PRINT_ARGS(NAME, NARG2(__VA_ARGS__), __VA_ARGS__))
+#define  _PRINT_ARGS_1(fn, str)     str, fn ## _default_fp()
+#define  _PRINT_ARGS_2(fn, str, fp) str, fp
+#define __PRINT_ARGS(fn, N, ...)       _PRINT_ARGS_ ## N (fn,              __VA_ARGS__)
+#define  _PRINT_ARGS(fn, N, ...)      __PRINT_ARGS(fn, N,                  __VA_ARGS__)
+#define   PRINT_ARGS(fn,    ...)    fn(_PRINT_ARGS(fn, NARG2(__VA_ARGS__), __VA_ARGS__))
 
-#define print(...) PRINT_ARGS(print_to_file, __VA_ARGS__)
+#define print(...) PRINT_ARGS(out, __VA_ARGS__)
 
-static FILE *print_to_file_default_fp(void) { return stdout; }
-static void  print_to_file(char *str, FILE *fp)
-{
-	(void)fputs((const char *)str, fp);
-}
+static FILE *out_default_fp(void)     { return stdout; }
+static void  out(char *str, FILE *fp) { (void)fputs((const char *)str, fp); }
 
 int main(void)
 {
@@ -40,7 +37,7 @@ int main(void)
 
 /**
  * Local Variables:
- *  compile-command: "gcc -o overload overload.c; ./overload; rm overload"
+ *  compile-command: "gcc -W -Wall -o overload overload.c; ./overload; rm overload"
  *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
