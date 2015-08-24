@@ -1,5 +1,14 @@
 /* Attempt at function overloading in C, inspired by
  * https://gustedt.wordpress.com/2010/06/03/default-arguments-for-c99/
+ *
+ * The following magic creates two functions with the same name and
+ * different input arguments:
+ *
+ *     void print(char *str);
+ *     void print(char *str, FILE *fp);
+ *
+ * Enjoy this example under the public domain, worldwide through the
+ * CC0 1.0 Universal public domain dedication.
  */
 
 #include <stdio.h>
