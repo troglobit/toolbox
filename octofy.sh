@@ -18,7 +18,7 @@ ln -s pimd.html      pimd.shtml
 ln -s mrouted.html   mrouted.shtml
 
 mkdir -p blog/2013/07/09/multicast-howto
-ln -s multicast-howto.html blog/2013/07/09/multicast-howto/index.html
+ln -s ../../../../multicast-howto.html blog/2013/07/09/multicast-howto/index.html
 
 ln -s tetris.html    tetris.shtml
 ln -s snake.html     snake.shtml
