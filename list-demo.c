@@ -15,64 +15,62 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-//#include <sys/queue.h>
+//#include <sys/queue.h> /* Linux/GLIBC version does not have _SAFE() macros! */
 #include "queue.h"
 
 #define MAX_PEERS 10
 #define MALLOC(p,sz)							\
 	p = malloc(sz);							\
 	if (!p)								\
-		errx(1, "Failed allocating LIST peer: %s\n", strerror(errno));
+		err(1, "Failed allocating LIST peer");
 
+/* *BSD queue.h API use 'struct peer' internally, code in main() use peer_t */
 typedef struct peer {
 	LIST_ENTRY(peer) link;
 	int data;
 } peer_t;
 
-typedef struct {
-	LIST_HEAD(peer_list, peer) peers;
-} torrent_t;
+/* Simplify initialization, otherwise LIST_INIT() must be used at runtime. */
+LIST_HEAD(, peer) peers = LIST_HEAD_INITIALIZER();
 
 
 int main (void)
 {
 	int i;
 	peer_t *entry, *tmp;
-	torrent_t torrent;
 
 	printf("Creating LIST list...\n");
-	LIST_INIT(&torrent.peers);
 
 	for (i = 0; i < MAX_PEERS; i++) {
 		MALLOC(entry, sizeof(*entry));
 		entry->data = i + 1;
 		printf("  Creating entry %d\n", i + 1);
-		LIST_INSERT_HEAD(&torrent.peers, entry, link);
+		LIST_INSERT_HEAD(&peers, entry, link);
 	}
 
 	printf("Linked list created. Iterating with foreach():\n");
 
 	i = 0;
-	LIST_FOREACH(entry, &torrent.peers, link) {
+	LIST_FOREACH(entry, &peers, link) {
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 	}
 
 	i = 0;
+
 #ifdef LIST_FOREACH_SAFE /* Actual BSD systems with working sys/queue.h */
 	printf("Removing all entries, cleaning up using LIST_FOREACH_SAFE() ...\n");
-	LIST_FOREACH_SAFE(entry, &torrent.peers, link, tmp) {
+	LIST_FOREACH_SAFE(entry, &peers, link, tmp) {
 		LIST_REMOVE(entry, link);
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
 	}
 #else
 	printf("Removing all entries, cleaning up using !LIST_EMPTY() ...\n");
-	while (!LIST_EMPTY(&torrent.peers)) {
-		entry = LIST_FIRST(&torrent.peers);
+	while (!LIST_EMPTY(&peers)) {
+		entry = LIST_FIRST(&peers);
 		LIST_REMOVE(entry, link);
 		printf("  Entry %d => data:%d\n", i++, entry->data);
 		free(entry);
