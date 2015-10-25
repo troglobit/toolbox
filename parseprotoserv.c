@@ -24,128 +24,137 @@
 typedef struct {
 	FILE *fp;
 	char buf[256];
-	char *sep;
-} unix_file_t;
+	char *sep, *save;
+} lfile_t;
 
-int unix_file_open(unix_file_t *uf, char *file, char *sep)
+lfile_t *lfopen(char *file, char *sep)
 {
-	if (!uf || !file || !sep) {
-		errno = EINVAL;
-		return 1;
-	}
-		
-	memset(uf, 0, sizeof(*uf));
-	uf->sep = sep;
+	lfile_t *lf;
 
-	uf->fp = fopen(file, "r");
-	if (!uf->fp)
-		return 1;
-
-	return 0;
-}
-
-void unix_file_close(unix_file_t *uf)
-{
-	if (uf && uf->fp) {
-		fclose(uf->fp);
-		uf->fp = NULL;
-	}
-}
-
-char *unix_file_token(unix_file_t *uf)
-{
-	char *token;
-
-	if (!uf || !uf->fp || !uf->sep) {
+	if (!file || !sep) {
 		errno = EINVAL;
 		return NULL;
 	}
 
-	token = strtok(NULL, uf->sep);
+	/* Use calloc for clearing buf on behalf of lftok() */
+	lf = calloc(sizeof(*lf), sizeof(char));
+	if (lf) {
+		lf->fp  = fopen(file, "r");
+		lf->sep = sep;
+
+		if (!lf->fp) {
+			free(lf);
+			return NULL;
+		}
+	}
+
+	return lf;
+}
+
+void lfclose(lfile_t *lf)
+{
+	if (!lf)
+		return;
+
+	if (lf->fp)
+		fclose(lf->fp);
+	free(lf);
+}
+
+char *lftok(lfile_t *lf)
+{
+	char *token;
+
+	if (!lf || !lf->fp || !lf->sep) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	token = strtok_r(NULL, lf->sep, &lf->save);
 	if (!token) {
-		while (fgets(uf->buf, sizeof(uf->buf), uf->fp)) {
-			if (uf->buf[0] == '#')
+		while (fgets(lf->buf, sizeof(lf->buf), lf->fp)) {
+			if (lf->buf[0] == '#')
 				continue;
 
-			token = strtok(uf->buf, uf->sep);
+			token = strtok_r(lf->buf, lf->sep, &lf->save);
 			if (!token)
 				continue;
 			
 			return token;
 		}
 
+		errno = ENOENT;
 		return NULL;
 	}
 
 	return token;
 }
 
-int unix_file_getent(unix_file_t *uf, char *ent)
+
+char *lfgetkey(lfile_t *lf, char *key)
 {
 	char *token;
-	size_t token_len, ent_len = strlen(ent);
 
-	if (!uf || !uf->fp) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	while ((token = unix_file_token(uf))) {
-
+	while ((token = lftok(lf))) {
 		if (token[0] == '#')
 			continue;
 
-		token_len = strlen(token);
-		if (!strncmp(token, ent, MAX(token_len, ent_len))) {
-			token = unix_file_token(uf);
-			if (!token) {
-				errno = ENOENT;
-				return -1;
-			}
-
-			return atoi(token);
-		}
+		if (!strncmp(token, key, MAX(strlen(token), strlen(key))))
+			return lftok(lf);
 	}
 
-	errno = ENOENT;
+	return NULL;
+}
+
+int lfgetint(lfile_t *lf, char *key)
+{
+	char *token = lfgetkey(lf, key);
+
+	if (token)
+		return atoi(token);
+
 	return -1;
+}
+
+int fgetint(char *file, char *sep, char *key)
+{
+	int val = -1;
+	lfile_t *lf;
+
+	lf = lfopen(file, sep);
+	if (lf) {
+		val = lfgetint(lf, key);
+		lfclose(lf);
+	}
+
+	return val;
 }
 
 int main(void)
 {
 	int val;
-	unix_file_t uf;
+	lfile_t lf;
 
-	if (unix_file_open(&uf, "/etc/protocols", " \n\t")) {
-		perror("Failed opening file");
+	val = fgetint("/etc/protocols", " \n\t", "udp");
+	if (val == -1) {
+		perror("Failed locating 'udp' protocol");
 		return 1;
 	}
+	printf("udp has proto %d\n", val);
 
-	val = unix_file_getent(&uf, "udp");
-	if (-1 == val)
-		perror("Failed locating udp protocol");
-	else
-		printf("udp has proto %d\n", val);
-
-	unix_file_close(&uf);
-
-	if (unix_file_open(&uf, "/etc/services", " /\n\t")) {
-		perror("Failed opening file");
+	val = fgetint("/etc/services", " /\n\t", "ftp");
+	if (val == -1) {
+		perror("Failed locating 'ftp' service");
 		return 1;
 	}
-	
-	val = unix_file_getent(&uf, "ftp");
-	if (-1 == val)
-		perror("Failed locating ftp service");
-	else
-		printf("ftp is inet port %d\n", val);
+	printf("ftp is inet port %d\n", val);
 
-	unix_file_close(&uf);
+	return 0;
 }
 
 /**
  * Local Variables:
- *  compile-command: "gcc -o parseprotoserv parseprotoserv.c && ./parseprotoserv"
+ *  compile-command: "gcc -Os -fno-stack-protector -fno-ident -o parseprotoserv parseprotoserv.c && ./parseprotoserv"
  *  version-control: t
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
