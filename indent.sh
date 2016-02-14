@@ -27,4 +27,5 @@ indent -linux									\
        --no-space-after-casts							\
        -T size_t -T sigset_t -T timeval_t -T pid_t -T pthread_t -T FILE		\
        -T time_t -T uint32_t -T uint16_t -T uint8_t -T uchar -T uint -T ulong	\
+       -T xht_t -T xhn_t							\
 $*
