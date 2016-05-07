@@ -1,5 +1,5 @@
 ;; Troglobit Enterprise ¯\_(ツ)_/¯ Emacs                -*-Emacs-LISP-*-
-;; 
+;;
 ;; This used to be a holy grail I called EnterpriseEmacs, but these days
 ;; anyyone can make use of Emacs in so many ways.  The best instrument
 ;; I've ever used and I keep learning more every day!
@@ -14,7 +14,7 @@
 ;; Save it as ~/.emacs (dot emacs in your home directory) to activate
 ;; and then (re)start your Emacs.
 ;;
-;; Copyright (c) 2009-2015  Joachim Nilsson <troglobit@gmail.com>
+;; Copyright (c) 2009-2016  Joachim Nilsson <troglobit@gmail.com>
 ;;
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -28,123 +28,192 @@
 ;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+;; Who am I?
+(setq user-full-name "Joachim Nilsson")
+(setq user-mail-address "troglobit@gmail.com")
+
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
-;;(load-file "~/.emacs.d/site-lisp/graphviz-dot-mode.el")
-;;(autoload 'cflow-mode "cflow-mode")
-;;(setq auto-mode-alist (append auto-mode-alist
-;;                              '(("\\.cflow$" . cflow-mode))))
+(add-to-list 'load-path "~/.emacs.d/epresent")
 
-;; Location for external plugins
-;;(add-to-list 'load-path "~/.emacs.d/plugins/yasnippet-0.6.1c")
-;;(require 'yasnippet)
-;;(yas/initialize)
-;;(yas/load-directory "~/.emacs.d/plugins/yasnippet-0.6.1c/snippets")
+;; Prevent accidental exit of Emacs
+(fset 'yes-or-no-p 'y-or-n-p)
+(setq confirm-kill-emacs (quote y-or-n-p))
 
-;;; Initialize external packages, from Debian.
-(let ((startup-file "/usr/share/emacs/site-lisp/debian-startup.el"))
-  (if (and (or (not (fboundp 'debian-startup))
-               (not (boundp  'debian-emacs-flavor)))
-           (file-readable-p startup-file))
-      (progn
-        (load-file startup-file)
-        (setq debian-emacs-flavor 'emacs)
-        (mapcar '(lambda (f)
-                   (and (not (string= (substring f -3) "/.."))
-                        (file-directory-p f)
-                        (add-to-list 'load-path f)))
-                (directory-files "/usr/share/emacs/site-lisp" t)))))
+;; Add MELPA to emacs packages
+(require 'package) ;; You might already have this line
+(add-to-list 'package-archives
+	     '("melpa" . "https://melpa.org/packages/"))
+(when (< emacs-major-version 24)
+  ;; For important compatibility libraries like cl-lib
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
+(package-initialize) ;; You might already have this line
 
-;; XKCD Reader :-)
-(add-to-list 'load-path (expand-file-name "/home/jocke/Troglobit/emacs-xkcd"))
-(require 'xkcd)
+;; Save minibuffer history between sessions
+(setq savehist-additional-variables
+      '(search-ring regexp-search-ring)
+      savehist-file "~/.emacs.d/savehist")
+(savehist-mode t)
 
-;; Emacs Code Browser
-;;(require 'cedet)
-;;(require 'ecb)
+;; Epresent orig
+(autoload 'epresent-run "epresent")
+(add-hook 'org-mode-hook
+	(function
+	 (lambda ()
+	   (setq truncate-lines nil)
+	   (setq word-wrap t)
+	   (define-key org-mode-map [f3]
+	     'epresent-run)
+	   )))
 
-;;; Autoload Stefan Reichoer's cool psvn
-;;(require 'psvn)
+;; Fix dired listings ...
+(setq dired-listing-switches "-laGh1v --group-directories-first")
 
-;;; Autoload magit
-;;(require 'magit)
+;; Helpful little thing https://github.com/justbur/emacs-which-key
+;;(require 'which-key)
+;;(which-key-mode t)
+;;(which-key-setup-side-window-right-bottom)
 
-;;; Autoload SCO UNIX Cscope
-;;(require 'xcscope)
+;; Helpful yasnippets
+;;(yas-global-mode t)
 
-;; Setup GNU Global code indexing
-;;(autoload 'gtags-mode "gtags" "" t)
-;;(setq c-mode-hook
-;;  '(lambda ()
-;;     (gtags-mode 1)))
+;; For external editor plugin to Thunderbird
+;;(require 'tbemail)
 
-;; Cedet now part of Emacs
-;;(global-ede-mode 1)                      ; Enable the Project management system
-;;(semantic-load-enable-code-helpers)      ; Enable prototype help and smart completion
+;; Beautify Emacs
+;; Add fringes
+(setq-default indicate-buffer-boundaries 'right)
+(setq-default indicate-empty-lines t)
+(setq-default frame-title-format '("%b - %F"))
 
-;;(push '(font-backend xft x) default-frame-alist)
+;; Make modeline prettier
+(set-face-attribute 'mode-line nil :box nil)
+(set-face-attribute 'mode-line-inactive nil :box nil)
+(set-face-attribute 'mode-line-highlight nil :box nil)
 
-;; window maximized
-;;(setq default-frame-alist '((top . 1) (left . 1) (width . 132) (height . 40)))
+;; Prettier scroll bar than toolkit default
+'(global-yascroll-bar-mode t)
+'(yascroll:delay-to-hide nil)
+'(yascroll:scroll-bar (quote (right-fringe left-fringe text-area)))
 
-;; Window transparency
-;;(set-frame-parameter (selected-frame) 'alpha '(<active> [<inactive>]))
-;(set-frame-parameter (selected-frame) 'alpha '(90 90))
-;(add-to-list 'default-frame-alist '(alpha 90 90))
+;; Change default theme
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+;; (load-theme 'radiance t)
+;; (load-theme 'github t)
+;; (load-theme 'troglobit-dark t)
+;;(load-theme 'darcula t)
+
+;; Show colors in Emacs when color codes are listed
+;;(rainbow-mode t)
+
+;; Nyan Cat buffer position :-)
+;; (nyan-mode t)
+
+;; Smart modeline
+;; (setq sml/theme 'dark)
+;; (setq sml/theme 'light)
+;; (setq sml/theme 'respectful)
+;;(setq sml/theme 'smart-mode-line-powerline)
+;;(sml/setup)
+
+;; ANSI colors in Emacs compilation buffer
+;; http://stackoverflow.com/questions/3072648/cucumbers-ansi-colors-messing-up-emacs-compilation-buffer
+(ignore-errors
+  (require 'ansi-color)
+  (defun my-colorize-compilation-buffer ()
+    (when (eq major-mode 'compilation-mode)
+      (ansi-color-apply-on-region compilation-filter-start (point-max))))
+  (add-hook 'compilation-filter-hook 'my-colorize-compilation-buffer))
+
+;; Complete-anything http://company-mode.github.io/
+;;(require 'company)
+;;(add-to-list 'company-backends 'company-c-headers)
+
+;; http://github.com/k-talo/smooth-scroll.el
+;; https://www.reddit.com/r/emacs/comments/3idv1c/is_it_possible_for_emacs_to_approach_the_fluidity/
+;;(require 'smooth-scroll)
+;;(smooth-scroll-mode t)
+;;(global-set-key [(meta  down)]  'scroll-up-1)
+;;(global-set-key [(meta  up)]    'scroll-down-1)
+;; (global-set-key [(meta  left)]  'scroll-right-1)
+;; (global-set-key [(meta  right)] 'scroll-left-1)
+
+;; Pimp up org-files
+;; https://thraxys.wordpress.com/2016/01/14/pimp-up-your-org-agenda/
+;; (use-package org-bullets
+;;	     :ensure t
+;;	     :init
+;;	     (setq org-bullets-bullet-list
+;;		   '("◉" "◎" "⚫" "○" "►" "◇"))
+;;	     :config
+;;	     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+;; (setq org-todo-keywords '((sequence "☛ TODO(t)" "|" "✔ DONE(d)")
+;;			  (sequence "⚑ WAITING(w)" "|")
+;;			  (sequence "|" "✘ CANCELED(c)")))
 
 ;;; Neat gnome-terminal like F11 toggle between fullscreen and windowed.
 (defun fullscreen ()
   (interactive)
   (set-frame-parameter nil 'fullscreen
-                       (if (frame-parameter nil 'fullscreen) nil 'fullboth)))
+		       (if (frame-parameter nil 'fullscreen) nil 'fullboth)))
 
-;; For Emacs 23, or older
-;;(require 'color-theme)
-;;(eval-after-load "color-theme"
-;;  '(progn
-;;     (color-theme-initialize)
-;;     (color-theme-hober)))
+(defun insert-date ()
+  (interactive)
+  (insert (format-time-string "%Y-%m-%dT%H:%M:%S")))
 
-;; For Emacs 24, or newer
-(require 'package)
-(add-to-list 'package-archives 
-             '("marmalade" .
-               "http://marmalade-repo.org/packages/"))
-(package-initialize)
-;;(load-theme 'solarized-dark t)
+(defun other-window-backwards ()
+  (interactive)
+  (other-window -1))
 
-;; Emacs Multi Media System
-;;(require 'emms-setup)
-;;(require 'emms-browser)
-;;(emms-all)
-;;(emms-default-players)
-;;(setq emms-source-file-default-directory "~/Music/")
-
-;;; Convert CamelCase() to camel_case()
-(defun un-camelcase-string (s &optional sep start)
-  "Convert CamelCase string S to lower case with word separator SEP.
-   Default for SEP is an underscore \"_\".
-
-   If third argument START is non-nil, convert words after that
-   index in STRING."
-  (let ((case-fold-search nil))
-    (while (string-match "[A-Z]" s (or start 1))
-      (setq s (replace-match (concat (or sep "_")
-                                     (downcase (match-string 0 s)))
-                             t nil s)))
-    (downcase s)))
-
-;; nuke whitespaces when writing to a file
-;;(add-hook 'before-save-hook 'whitespace-cleanup)
-
-;; http://info.borland.com/techpubs/jbuilder/jbuilder9/introjb/key_cua.html
-;; These are the bindings also used in early Borland C++ versions, like 3.0
-;; the last known "good" release.
-; function keys
-;; 1help, 2save, 3load, 4goto, 5zoom, 6next, 7split, 8exit!, 9make, 10other, 11fullscrn, 12undo
-;;       C2save as,                                         C9Build
-;;                                                          S9debug
-;; emacs: must use command name to allow interactive input
+;; Some useful keybindings, first are the function keys,
+;; freely adapted after the Borland C IDE.
+(setq initial-scratch-message    ";; Welcome to Troglobit Enterprise ¯\\_(ツ)_/¯ Emacs!
+;;\n\n")
+;; Key     Function
+;;   F1    Info
+;; C-F1    Woman
+;;   F2    Save
+;; C-F2    Save as
+;;   F3    Open
+;;   F4    ☞ Goto line
+;; C-F4    ⌕ Search
+;;   F5    Breakpoint (GDB)
+;; C-F5    Watcher    (GDB)
+;; S-F5    Insert date
+;;   F6    ⟷ Windows
+;; C-F6    ⟷ Frames
+;;   F7    ← Error
+;; S-F7    Next instr (GDB)
+;;   F8    → Error
+;; S-F8    Step instr (GDB)
+;;   F9    ⚙ Compile
+;; C-F9    ⚙ Compile
+;; S-F9    Debugger   (GDB)
+;;   F10   ☰ Menu
+;;   F11   ▣ Fullscreen
+;;   F12   Toggle Menu bar
+;; C-F12   Toggle Tool bar
+;; S-F12   Toggle GDB windows
+;; M-F12   Toggle Scroll bars
+;;
+;; M-#      Calculator
+;; C-Tab    → Next window
+;; C-S-Tab  ← Prev window
+;; C-+      Font Sz++
+;; C--      Font Sz--
+;;
+;; C-t C-l  Insert ISC license header
+;; C-t C-s  Insert signed-off-by (private)
+;; C-t C-w  Insert signed-off-by (work)
+;; C-t C-t  Insert file header   (work)
+;; C-t C-b  Insert file foooter  (work)
+;; C-t C-h  Insert func. header
+;; C-t C-i  Insert include body  (work)
+;;
+;; C-x C-b  iBuffer
+;; C-c m    Magit Status
+;;\n")
 
 (global-set-key [f1] 'info)
 (global-set-key [C-f1] 'woman)        ;; Context help
@@ -154,13 +223,14 @@
 
 (global-set-key [f3] 'find-file)
 (global-set-key [f4] 'goto-line)
-(global-set-key [F5] 'gdb-toggle-breakpoint)
-(global-set-key [C-F5] 'gud-watch)
+(global-set-key [C-f4] 'isearch-forward)
+(global-set-key [f5] 'gdb-toggle-breakpoint)
+(global-set-key [C-f5] 'gud-watch)
 (global-set-key [S-f5] 'insert-date)
 
-(global-set-key [f6] 'other-window)   ;;
+(global-set-key [f6]   'other-window)   ;;
 (global-set-key [C-f6] 'other-frame)
-(global-set-key [f7] 'previous-error)
+(global-set-key [f7]   'previous-error)
 ;;(global-set-key [f7] 'gdb-next)   ;; Only set in GDB mode?
 (global-set-key [S-f7] 'gdb-next)   ;;
 
@@ -171,169 +241,24 @@
 (global-set-key [C-f9] 'compile)
 (global-set-key [S-f9] 'gdb)
 
-(global-set-key [f11] 'fullscreen)
+(when window-system
+  (global-set-key [f11]   'fullscreen)
+  (global-unset-key [f12])
+  (global-set-key [f12]   'menu-bar-mode)
+  (global-set-key [C-f12] 'tool-bar-mode)
+  (global-set-key [M-f12] 'scroll-bar-mode))
+(global-set-key [S-f12] 'gdb-many-windows)
 
 (global-set-key (kbd "M-#") 'calculator)
-;;(global-set-key (kbd "C-c c") 'calculator)
-;;
-(global-set-key [C-prior] 'beginning-of-buffer)
-(global-set-key [C-next] 'end-of-buffer)
-
-;;; Key binding for switching to next and previous buffer
-;;(global-set-key '[C-tab] 'bs-cycle-next)
-;;(global-set-key '[C-S-iso-lefttab] 'bs-cycle-previous)
 (global-set-key '[C-tab] 'other-window)
-(global-set-key '[C-S-iso-lefttab] 'bs-cycle-previous)
-
-;; Johans hack with dabbrev
-(global-set-key [backtab]    'dabbrev-expand)
-
-;; Fix problem with s-dead-circumflex and other issues where using
-;; compose to get ^ ` et consortes no longer worked for me in Ubuntu.
-(require 'iso-transl)
-
-(defun linux-c-mode ()
-  "C mode with adjusted defaults for use with the Linux kernel."
-  (interactive)
-  (c-mode)
-  (c-set-style "K&R")
-  (setq tab-width 8)
-  (setq indent-tabs-mode t)
-  (setq c-basic-offset 8))
-
-(setq auto-mode-alist (cons '("/usr/src/linux.*/.*\\.[ch]$" . linux-c-mode)
-                            auto-mode-alist))
-
-(c-add-style "openbsd"
-             '("bsd"
-               (indent-tabs-mode . t)
-               (defun-block-intro . 8)
-               (statement-block-intro . 8)
-               (statement-case-intro . 8)
-               (substatement-open . 4)
-               (substatement . 8)
-               (arglist-cont-nonempty . 4)
-               (inclass . 8)
-               (knr-argdecl-intro . 8)))
-
-(c-add-style "mrouted"
-             '("ellemtel"
-               (c-basic-offset . 4)))
-
- (c-add-style "microsoft"
-              '("stroustrup"
-                (c-offsets-alist
-                 (innamespace . -)
-                 (inline-open . 0)
-                 (inher-cont . c-lineup-multi-inher)
-                 (arglist-cont-nonempty . +)
-                 (template-args-cont . +))))
-
-;; Add color to a shell running in emacs 'M-x shell'
-(autoload 'ansi-color-for-comint-mode-on "ansi-color" nil t)
-(add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
-
-;; ============================
-;; Mouse Settings
-;; ============================
-
-;; mouse button one drags the scroll bar
-;;(global-set-key [vertical-scroll-bar down-mouse-1] 'scroll-bar-drag)
-
-;; ============================
-;; Display
-;; ============================
-
-;; disable startup message
-(setq inhibit-startup-message t)
-
-;; ===========================
-;; Behaviour
-;; ===========================
-
-;; Make all yes-or-no questions as y-or-n
-(fset 'yes-or-no-p 'y-or-n-p)
-
-;; Pgup/dn will return exactly to the starting point.
-;;(setq scroll-preserve-screen-position 1)
-
-;; don't automatically add new lines when scrolling down at
-;; the bottom of a buffer
-(setq next-line-add-newlines nil)
-
-;; scroll just one line when hitting the bottom of the window
-;;(setq scroll-step 1)
-;;(setq scroll-conservatively 1)
-
-;; format the title-bar to always include the buffer name
-(setq frame-title-format "emacs - %b")
-
-;; show a menu only when running within X (save real estate when
-;; in console)
-(menu-bar-mode (if window-system 1 -1))
-
-;; replace highlighted text with what I type rather than just
-;; inserting at a point
-(delete-selection-mode t)
-
-;; resize the mini-buffer when necessary
-(setq resize-minibuffer-mode t)
-
-;; highlight during searching
-(setq query-replace-highlight t)
-
-;; highlight incremental search
-(setq search-highlight t)
-
-;; Fully redraw the display before it processes queued input events.
-;; http://www.masteringemacs.org/articles/2011/10/02/improving-performance-emacs-display-engine/
-(setq redisplay-dont-pause t)
-
-;; Disable question about killing a buffer with a live process attached to it
-(setq kill-buffer-query-functions
-  (remq 'process-kill-buffer-query-function
-         kill-buffer-query-functions))
-
-;; ===========================
-;; Custom Functions
-;; ===========================
-
-;; print an ascii table
-(defun ascii-table ()
-  (interactive)
-  (switch-to-buffer "*ASCII*")
-  (erase-buffer)
-  (insert (format "ASCII characters up to number %d.\n" 254))
-  (let ((i 0))
-    (while (< i 254)
-      (setq i (+ i 1))
-      (insert (format "%4d %c\n" i i))))
-  (beginning-of-buffer))
-
-;; indent the entire buffer
-(defun c-indent-buffer ()
-  "Indent entire buffer of C source code."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (while (< (point) (point-max))
-      (c-indent-command)
-      (end-of-line)
-      (forward-char 1))))
-
-(defun insert-function-header () (interactive)
-  (insert "/**\n")
-  (insert " * function - Short description.\n")
-  (insert " * @param: Description\n")
-  (insert " * \n")
-  (insert " * Returns: \n")
-  (insert " * \n")
-  (insert " */\n"))
+(global-set-key '[C-iso-lefttab] 'other-window-backwards)
+(global-set-key (kbd "C-+") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
 
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2015  Westermo Teleindustri AB\n")
+  (insert " * Copyright (C) 2016  Westermo Teleindustri AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -344,7 +269,7 @@
 (defun insert-include-body () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2015  Westermo Teleindustri AB\n")
+  (insert " * Copyright (C) 2016  Westermo Teleindustri AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -360,16 +285,28 @@
 (defun insert-file-footer () (interactive)
   (insert "/**\n")
   (insert " * Local Variables:\n")
-  (insert " *  version-control: t\n")
-  (insert " *  indent-tabs-mode: nil\n")
-  (insert " *  c-file-style: \"ellemtel\"\n")
+  (insert " *  indent-tabs-mode: t\n")
+  (insert " *  c-file-style: \"linux\"\n")
   (insert " * End:\n")
+  (insert " */\n"))
+
+(defun insert-function-header () (interactive)
+  (insert "/**\n")
+  (insert " * function-name -- Short description\n")
+  (insert " * @var1: Variable description\n")
+  (insert " * @var2: Variable description\n")
+  (insert " *\n")
+  (insert " * Function description, longer.\n")
+  (insert " *\n")
+  (insert " * Returns:\n")
+  (insert " * If non-void function, description of return value and what\n")
+  (insert " * @errno may be set to.\n")
   (insert " */\n"))
 
 (defun insert-isc-license () (interactive)
   (insert "/*\n")
   (insert " *\n")
-  (insert " * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>\n")
+  (insert " * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>\n")
   (insert " *\n")
   (insert " * Permission to use, copy, modify, and/or distribute this software for any\n")
   (insert " * purpose with or without fee is hereby granted, provided that the above\n")
@@ -406,144 +343,104 @@
 ;; Bind C-c m to magit-status
 (global-set-key (kbd "C-c m") 'magit-status)
 
-;; Transparency, from http://emacs-fu.blogspot.se/2009/02/transparent-emacs.html
-(defun djcb-opacity-modify (&optional dec)
-  "modify the transparency of the emacs frame; if DEC is t,
-    decrease the transparency, otherwise increase it in 10%-steps"
-  (let* ((alpha-or-nil (frame-parameter nil 'alpha)) ; nil before setting
-          (oldalpha (if alpha-or-nil alpha-or-nil 100))
-          (newalpha (if dec (- oldalpha 10) (+ oldalpha 10))))
-    (when (and (>= newalpha frame-alpha-lower-limit) (<= newalpha 100))
-      (modify-frame-parameters nil (list (cons 'alpha newalpha))))))
+;;(require 'flx-ido)
+;;(ido-mode 1)
+;;(ido-everywhere 1)
+;;(flx-ido-mode 1)
+;; disable ido faces to see flx highlights.
+;;(setq ido-enable-flex-matching t)
+;;(setq ido-use-faces nil)
 
- ;; C-8 will increase opacity (== decrease transparency)
- ;; C-9 will decrease opacity (== increase transparency
- ;; C-0 will returns the state to normal
-(global-set-key (kbd "C-8") '(lambda()(interactive)(djcb-opacity-modify)))
-(global-set-key (kbd "C-9") '(lambda()(interactive)(djcb-opacity-modify t)))
-(global-set-key (kbd "C-0") '(lambda()(interactive)
-                               (modify-frame-parameters nil `((alpha . 100)))))
-
-;; Language tool -- https://github.com/mhayashi1120/Emacs-langtool
-(require 'langtool)
-(setq langtool-mother-tongue "en")
-(setq langtool-language-tool-jar "~/LanguageTool-2.7/languagetool-commandline.jar")
-(global-set-key "\C-x4w" 'langtool-check)
-(global-set-key "\C-x4W" 'langtool-check-done)
-(global-set-key "\C-x4l" 'langtool-switch-default-language)
-(global-set-key "\C-x44" 'langtool-show-message-at-point)
-(global-set-key "\C-x4c" 'langtool-correct-buffer)
-
-;; Setup mscgen - http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-mscgen.html
-(setq exec-path (append exec-path '("/usr/bin/mscgen")))
-
-;; All settings activated and saved in the Options menu Emacs stores here
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(all-christian-calendar-holidays t)
- '(ansi-color-names-vector [solarized-bg red green yellow blue magenta cyan solarized-fg])
- '(auto-hscroll-mode t)
- '(baud-rate 115200)
- '(c-default-style (quote ((c-mode . "linux") (c++-mode . "ellemtel") (java-mode . "java") (awk-mode . "awk") (other . "gnu"))))
- '(c-max-one-liner-length 132)
- '(calendar-christian-all-holidays-flag t)
- '(calendar-mark-holidays-flag t)
- '(calendar-week-start-day 1)
- '(case-fold-search t)
- '(case-replace t)
+ '(ansi-color-faces-vector
+   [default default default italic underline success warning error])
+ '(ansi-color-names-vector
+   ["black" "#d55e00" "#009e73" "#f8ec59" "#0072b2" "#cc79a7" "#56b4e9" "white"])
+ '(before-save-hook nil)
+ '(blink-cursor-mode nil)
+ '(c-default-style
+   (quote
+    ((c-mode . "linux")
+     (c++-mode . "linux")
+     (java-mode . "java")
+     (awk-mode . "awk")
+     (other . "gnu"))))
  '(column-number-mode t)
- '(compilation-auto-jump-to-first-error nil)
- '(compilation-scroll-output t)
- '(compilation-window-height 15)
- '(confirm-kill-emacs (quote y-or-n-p))
- '(cua-enable-cua-keys (quote shift))
- '(cua-highlight-region-shift-only t)
- '(cua-mode t nil (cua-base))
- '(custom-enabled-themes (quote (tango-dark)))
- '(custom-safe-themes (quote ("72cc9ae08503b8e977801c6d6ec17043b55313cda34bcf0e6921f2f04cf2da56" "d2622a2a2966905a5237b54f35996ca6fda2f79a9253d44793cfe31079e3c92b" "501caa208affa1145ccbb4b74b6cd66c3091e41c5bb66c677feda9def5eab19c" default)))
+ '(company-abort-manual-when-too-short t)
+ '(company-auto-complete (quote (quote company-explicit-action-p)))
+ '(completion-ignored-extensions
+   (quote
+    (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
+ '(custom-enabled-themes (quote (misterioso)))
+ '(custom-safe-themes
+   (quote
+    ("83e584d74b0faea99a414a06dae12f11cd3176fdd4eba6674422539951bcfaa8" "dc54983ec5476b6187e592af57c093a42790f9d8071d9a0163ff4ff3fbea2189" "51b8c4adab95ff23b8f5cf07ea0b9805c8662936fe0d877d61a0dd02b6adc5f6" "118717ce0a2645a0cf240b044999f964577ee10137b1f992b09a317d5073c02d" "dc758223066a28f3c6ef6c42c9136bf4c913ec6d3b710794252dc072a3b92b14" "9122dfb203945f6e84b0de66d11a97de6c9edf28b3b5db772472e4beccc6b3c5" "6c64f651bca94dfaf0b06c1bc1f7b1eadc5f46453206e285401ea00f279df0aa" default)))
+ '(delete-active-region t)
+ '(delete-selection-mode t)
  '(desktop-save-mode t)
- '(diff-default-read-only nil)
- '(diff-mode-hook (quote (diff-make-unified)))
- '(diff-switches "-u")
- '(diff-update-on-the-fly nil)
- '(dired-ls-F-marks-symlinks t)
- '(display-time-24hr-format t)
- '(display-time-day-and-date nil)
- '(display-time-default-load-average nil)
- '(display-time-mail-file (quote none))
- '(ecb-directories-menu-user-extension-function (quote ignore))
- '(ecb-history-menu-user-extension-function (quote ignore))
- '(ecb-layout-name "leftright2")
- '(ecb-methods-menu-user-extension-function (quote ignore))
- '(ecb-options-version "2.32")
- '(ecb-primary-secondary-mouse-buttons (quote mouse-1--mouse-2))
- '(ecb-sources-menu-user-extension-function (quote ignore))
- '(ecb-tip-of-the-day nil)
- '(ecb-vc-supported-backends (quote ((ecb-vc-dir-managed-by-CVS . ecb-vc-state) (ecb-vc-dir-managed-by-RCS . ecb-vc-state) (ecb-vc-dir-managed-by-SVN . ecb-vc-state))))
- '(ecb-windows-width 0.13)
+ '(display-battery-mode t)
+ '(ecb-options-version "2.40")
+ '(ecb-source-path (quote ("~/Troglobit")))
  '(ede-project-directories (quote ("/home/jocke/Troglobit/uftpd")))
- '(ediff-merge-split-window-function (quote split-window-vertically))
- '(erc-nick "troglobit")
- '(erc-server "irc.labs.westermo.se")
- '(erc-user-full-name "Joachim Nilsson")
- '(european-calendar-style t)
- '(fci-rule-color "#eee8d5")
+ '(ediff-window-setup-function (quote ediff-setup-windows-plain))
+ '(ensime-sem-high-faces
+   (quote
+    ((var :foreground "#9876aa" :underline
+	  (:style wave :color "yellow"))
+     (val :foreground "#9876aa")
+     (varField :slant italic)
+     (valField :foreground "#9876aa" :slant italic)
+     (functionCall :foreground "#a9b7c6")
+     (implicitConversion :underline
+			 (:color "#808080"))
+     (implicitParams :underline
+		     (:color "#808080"))
+     (operator :foreground "#cc7832")
+     (param :foreground "#a9b7c6")
+     (class :foreground "#4e807d")
+     (trait :foreground "#4e807d" :slant italic)
+     (object :foreground "#6897bb" :slant italic)
+     (package :foreground "#cc7832")
+     (deprecated :strike-through "#a9b7c6"))))
  '(fill-column 72)
- '(gdb-same-frame t)
- '(gdb-show-main t)
  '(global-auto-revert-mode t)
- '(global-hl-line-mode nil)
- '(hide-ifdef-lines t)
- '(hide-ifdef-shadow t)
- '(ido-enabled (quote both) nil (ido))
- '(ido-everywhere t)
+ '(global-company-mode nil)
+ '(global-magit-file-mode t)
+ '(graphviz-dot-preview-extension "svg")
  '(ido-mode (quote both) nil (ido))
- '(indent-tabs-mode nil)
  '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
- '(make-backup-files nil)
- '(mark-holidays-in-calendar t)
- '(menu-bar-mode nil)
- '(org-babel-load-languages (quote ((python . t) (mscgen . t) (dot . t))))
+ '(magit-commit-signoff t)
+ '(magit-diff-refine-hunk (quote all))
+ '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(org-support-shift-select t)
- '(pc-select-selection-keys-only t)
- '(pc-selection-mode t)
- '(safe-local-variable-values (quote ((c-style . pluto) (c-indent-style . "ellemtel"))))
- '(save-place t nil (saveplace))
+ '(projectile-global-mode t)
  '(scroll-bar-mode nil)
- '(server-done-hook (quote (delete-frame)))
  '(server-mode t)
- '(server-window (quote switch-to-buffer-other-frame))
- '(sh-basic-offset 8)
- '(sh-indentation 8)
- '(sh-learn-basic-offset (quote usually))
  '(show-paren-mode t)
- '(text-mode-hook (quote (turn-on-auto-fill text-mode-hook-identify)))
- '(todoo-collapse-items t)
- '(todoo-indent-column 0)
+ '(split-height-threshold 200)
+ '(split-width-threshold 140)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
- '(truncate-lines t)
  '(uniquify-buffer-name-style (quote forward) nil (uniquify))
- '(vc-annotate-background "white")
- '(vc-consult-headers nil)
- '(vc-dired-recurse nil)
- '(vc-dired-terse-display nil)
- '(vc-display-status nil)
- '(version-control (quote never))
- '(wdired-enable nil)
- '(which-function-mode t)
- '(x-select-enable-clipboard t))
+ '(which-function-mode t))
 
-;; The font 'Envy Code R' is made by Damien Guard, freely available from:
-;; http://damieng.com/blog/2008/05/26/envy-code-r-preview-7-coding-font-released
+;; Envy Code R is usally a great font, other great fonts are
+;; Source Code Pro and Inconsolata
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "unknown" :slant normal :weight normal :height 113 :width normal)))))
+ '(default ((t (:family "Ubuntu Mono" :foundry "unknown" :slant normal :weight normal :height 98 :width normal))))
+ '(org-level-2 ((t (:inherit outline-8))))
+ '(which-func ((t (:foreground "dark green")))))
