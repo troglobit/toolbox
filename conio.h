@@ -75,7 +75,7 @@
 
 /**
  * Local Variables:
- *  version-control: t
- *  c-file-style: "ellemtel"
+ *  indent-tabs-mode: t
+ *  c-file-style: "linux"
  * End:
  */
