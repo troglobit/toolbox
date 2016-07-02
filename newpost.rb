@@ -38,6 +38,13 @@ comments: true
 categories:
 ---
 
+
+
+<!--
+  -- Local Variables:
+  -- mode: markdown
+  -- End:
+  -->
 END
 
 if !File.exists?(dir)
