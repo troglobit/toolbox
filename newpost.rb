@@ -57,4 +57,5 @@ File.open(path, 'w') do |f|
 end
 
 system("emacsclient", "-a vim", "-c", "+9", path)
-git add path
+system("git", "add", path)
+
