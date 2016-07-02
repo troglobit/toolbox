@@ -56,4 +56,4 @@ File.open(path, 'w') do |f|
   f.close
 end
 
-system("emacsclient", "-a vim", "+9", path)
+system("emacsclient", "-a vim", "-c", "+9", path)
