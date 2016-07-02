@@ -23,7 +23,7 @@ end
 dir    = "_posts"
 title  = ARGV[0]
 now    = Time.new()
-name   = title.strip.downcase.gsub(/ /, '-')
+name   = title.strip.downcase.gsub(/[^0-9A-Za-z.\-]/, '-')
 prefix = now.strftime("%Y-%m-%d")
 today  = now.strftime('%Y-%m-%d %H:%M:%S %z')
 filenm = "#{prefix}-#{name}.markdown"
@@ -57,3 +57,4 @@ File.open(path, 'w') do |f|
 end
 
 system("emacsclient", "-a vim", "-c", "+9", path)
+git add path
