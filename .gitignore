@@ -9,7 +9,6 @@ dynamic-linking/daemon
 hex2str
 list-demo
 mroute-show
-progress
 tailq-demo
 timers
 /conf/confuse
