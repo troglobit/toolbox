@@ -14,11 +14,11 @@
 #include <stdlib.h>		/* atexit(), rand() */
 #include <stdio.h>
 #include <string.h>		/* strlen() */
+#include <time.h>
 #include <termios.h>
 #include <unistd.h>		/* usleep() */
 
 #define msleep(msec) usleep(msec * 1000)
-#define DRAW_DELAY   10000
 #define SCREEN_WIDTH 132
 #include "../libite/conio.h"
 
@@ -63,6 +63,37 @@ static int lenparse(const char *line)
 	return len;
 }
 
+static void delay(unsigned long loops)
+{
+	while (loops)
+		loops--;
+}
+
+static unsigned long bogomips(void)
+{
+	unsigned long lps = 1;
+	unsigned long ticks;
+
+	fprintf(stderr, "\nCalibrating delay loop ... ");
+
+	while ((lps <<= 1)) {
+		ticks = clock();
+		delay(lps);
+		ticks = clock() - ticks;
+
+		if (ticks >= CLOCKS_PER_SEC) {
+			lps = (lps / ticks) * CLOCKS_PER_SEC;
+			fprintf(stderr, "%lu.%02lu BogoMips\n", lps / 500000, (lps / 5000) % 100);
+
+			return lps / 500000;
+		}
+	}
+
+	printf("failed\n");
+
+	return 2000;
+}
+
 int logo_init(int center)
 {
 	int i, len;
@@ -97,15 +128,18 @@ static void cursor(int x, int y)
 int logo_show(int rows, int cols, int center)
 {
 	int l = 0;
-	int x, y, i = 0, j;
+	int x, y;
+	unsigned long i, delay;
 
 	if (logo_init(center))
 		return 1;
 
 	hidecursor();
 	clrscr();
+
+	delay = bogomips() * 5;
 	for (y = screen_rowo; y < screen_rows && logo[l]; y++) {
-	     for (j = 0; j < DRAW_DELAY; j++) {
+	     for (i = 0; i < delay; i++) {
 		     x = (rand() % logo_cols) + screen_colo;
 		     if (x > 5)
 			     x -= 5;
