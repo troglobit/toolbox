@@ -16,3 +16,4 @@ timers
 /mcjoin*.changes
 /mcjoin*.deb
 /checktty
+/bogomips
