@@ -47,7 +47,7 @@ static void get_perms(struct stat *st, char *buf, size_t len)
 		 S_ISCHR(m) ? 'c' : S_ISBLK(m) ? 'b' : S_ISFIFO(m) ? 'p' : S_ISLNK(m) ? 'l' : S_ISSOCK(m) ? 's' : '-',
 		 (m & S_IRUSR) ? 'r' : '-',
 		 (m & S_IWUSR) ? 'w' : '-',
-		 (m & S_ISUID ) ? 's' : (m & S_IXUSR) ? 'x' : '-',
+		 (m & S_ISUID) ? 's' : (m & S_IXUSR) ? 'x' : '-',
 		 (m & S_IRGRP) ? 'r' : '-',
 		 (m & S_IWGRP) ? 'w' : '-',
 		 (m & S_ISGID) ? 's' : (m & S_IXGRP) ? 'x' : '-',
