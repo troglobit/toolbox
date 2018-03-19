@@ -68,6 +68,10 @@
 
 ;; Fix dired listings ...
 (setq dired-listing-switches "-laGh1v --group-directories-first")
+;;(dired-turn-on-discover t)
+
+;; Workaround missing dead keys (`~ etc.) in Unity
+(require 'iso-transl)
 
 ;; Helpful little thing https://github.com/justbur/emacs-which-key
 ;;(require 'which-key)
@@ -79,6 +83,9 @@
 
 ;; For external editor plugin to Thunderbird
 ;;(require 'tbemail)
+
+;; For Flex & Bison
+(require 'bison-mode)
 
 ;; Beautify Emacs
 ;; Add fringes
@@ -97,10 +104,10 @@
 '(yascroll:scroll-bar (quote (right-fringe left-fringe text-area)))
 
 ;; Change default theme
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-;; (load-theme 'radiance t)
-;; (load-theme 'github t)
-;; (load-theme 'troglobit-dark t)
+;;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+;;(load-theme 'radiance t)
+;;(load-theme 'github t)
+;;(load-theme 'troglobit-dark t)
 ;;(load-theme 'darcula t)
 
 ;; Show colors in Emacs when color codes are listed
@@ -138,7 +145,7 @@
 ;; (global-set-key [(meta  left)]  'scroll-right-1)
 ;; (global-set-key [(meta  right)] 'scroll-left-1)
 
-;; Pimp up org-files
+;; Pimp org-files
 ;; https://thraxys.wordpress.com/2016/01/14/pimp-up-your-org-agenda/
 ;; (use-package org-bullets
 ;;	     :ensure t
@@ -221,8 +228,9 @@
 (global-set-key [f2] 'save-buffer)    ;; Save current
 (global-set-key [C-f2] 'write-file)   ;; Save as
 
-(global-set-key [f3] 'find-file)
-(global-set-key [f4] 'goto-line)
+(global-set-key [S-f3] 'find-file)
+(global-set-key [S-f4] 'goto-line)
+;;(global-set-key [f4]   'call-last-kbd-macro)
 (global-set-key [C-f4] 'isearch-forward)
 (global-set-key [f5] 'gdb-toggle-breakpoint)
 (global-set-key [C-f5] 'gud-watch)
@@ -240,6 +248,11 @@
 (global-set-key [f9] 'compile)
 (global-set-key [C-f9] 'compile)
 (global-set-key [S-f9] 'gdb)
+
+;; Usability keys for ThinkPad X1 Carbon and similar keyboards
+(global-set-key [C-prior] 'beginning-of-buffer)
+(global-set-key [C-next]  'end-of-buffer)
+
 
 (when window-system
   (global-set-key [f11]   'fullscreen)
@@ -343,6 +356,9 @@
 ;; Bind C-c m to magit-status
 (global-set-key (kbd "C-c m") 'magit-status)
 
+(defun magit-toggle-scroll-to-top () (recenter-top-bottom 0))
+(advice-add 'magit-toggle-section :after #'magit-toggle-scroll-to-top)
+
 ;;(require 'flx-ido)
 ;;(ido-mode 1)
 ;;(ido-everywhere 1)
@@ -363,9 +379,9 @@
  '(ansi-color-faces-vector
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
-   ["black" "#d55e00" "#009e73" "#f8ec59" "#0072b2" "#cc79a7" "#56b4e9" "white"])
+   ["#424242" "#EF9A9A" "#C5E1A5" "#FFEE58" "#64B5F6" "#E1BEE7" "#80DEEA" "#E0E0E0"])
+ '(beacon-color "#ec4780")
  '(before-save-hook nil)
- '(blink-cursor-mode nil)
  '(c-default-style
    (quote
     ((c-mode . "linux")
@@ -376,6 +392,7 @@
  '(column-number-mode t)
  '(company-abort-manual-when-too-short t)
  '(company-auto-complete (quote (quote company-explicit-action-p)))
+ '(compilation-message-face (quote default))
  '(completion-ignored-extensions
    (quote
     (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
@@ -385,11 +402,10 @@
     ("83e584d74b0faea99a414a06dae12f11cd3176fdd4eba6674422539951bcfaa8" "dc54983ec5476b6187e592af57c093a42790f9d8071d9a0163ff4ff3fbea2189" "51b8c4adab95ff23b8f5cf07ea0b9805c8662936fe0d877d61a0dd02b6adc5f6" "118717ce0a2645a0cf240b044999f964577ee10137b1f992b09a317d5073c02d" "dc758223066a28f3c6ef6c42c9136bf4c913ec6d3b710794252dc072a3b92b14" "9122dfb203945f6e84b0de66d11a97de6c9edf28b3b5db772472e4beccc6b3c5" "6c64f651bca94dfaf0b06c1bc1f7b1eadc5f46453206e285401ea00f279df0aa" default)))
  '(delete-active-region t)
  '(delete-selection-mode t)
+ '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
+ '(diff-switches "-u")
  '(display-battery-mode t)
- '(ecb-options-version "2.40")
- '(ecb-source-path (quote ("~/Troglobit")))
- '(ede-project-directories (quote ("/home/jocke/Troglobit/uftpd")))
  '(ediff-window-setup-function (quote ediff-setup-windows-plain))
  '(ensime-sem-high-faces
    (quote
@@ -411,27 +427,68 @@
      (package :foreground "#cc7832")
      (deprecated :strike-through "#a9b7c6"))))
  '(fill-column 72)
+ '(font-use-system-font nil)
  '(global-auto-revert-mode t)
  '(global-company-mode nil)
  '(global-magit-file-mode t)
  '(graphviz-dot-preview-extension "svg")
+ '(highlight-indent-guides-auto-enabled nil)
+ '(highlight-symbol-colors
+   (quote
+    ("#FFEE58" "#C5E1A5" "#80DEEA" "#64B5F6" "#E1BEE7" "#FFCC80")))
+ '(highlight-symbol-foreground-color "#E0E0E0")
+ '(highlight-tail-colors (quote (("#ec4780" . 0) ("#424242" . 100))))
  '(ido-mode (quote both) nil (ido))
  '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
+ '(ispell-dictionary "american")
+ '(magit-commit-arguments (quote ("--signoff")))
  '(magit-commit-signoff t)
  '(magit-diff-refine-hunk (quote all))
+ '(magit-diff-use-overlays nil)
+ '(nrepl-message-colors
+   (quote
+    ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
+ '(org-fontify-done-headline t)
+ '(org-fontify-quote-and-verse-blocks t)
+ '(org-fontify-whole-heading-line t)
  '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(org-support-shift-select t)
  '(projectile-global-mode t)
  '(scroll-bar-mode nil)
+ '(scroll-conservatively 10000)
+ '(server-kill-new-buffers t)
  '(server-mode t)
  '(show-paren-mode t)
  '(split-height-threshold 200)
  '(split-width-threshold 140)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
+ '(tramp-syntax (quote default))
  '(uniquify-buffer-name-style (quote forward) nil (uniquify))
+ '(vc-annotate-background "#2B2B2B")
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#BC8383")
+     (40 . "#CC9393")
+     (60 . "#DFAF8F")
+     (80 . "#D0BF8F")
+     (100 . "#E0CF9F")
+     (120 . "#F0DFAF")
+     (140 . "#5F7F5F")
+     (160 . "#7F9F7F")
+     (180 . "#8FB28F")
+     (200 . "#9FC59F")
+     (220 . "#AFD8AF")
+     (240 . "#BFEBBF")
+     (260 . "#93E0E3")
+     (280 . "#6CA0A3")
+     (300 . "#7CB8BB")
+     (320 . "#8CD0D3")
+     (340 . "#94BFF3")
+     (360 . "#DC8CC3"))))
+ '(vc-annotate-very-old-color "#DC8CC3")
  '(which-function-mode t))
 
 ;; Envy Code R is usally a great font, other great fonts are
@@ -441,6 +498,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Ubuntu Mono" :foundry "unknown" :slant normal :weight normal :height 98 :width normal))))
- '(org-level-2 ((t (:inherit outline-8))))
- '(which-func ((t (:foreground "dark green")))))
+ '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 98 :width normal)))))
