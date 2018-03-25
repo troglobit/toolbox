@@ -55,6 +55,27 @@
       savehist-file "~/.emacs.d/savehist")
 (savehist-mode t)
 
+;; Use projectile to sort ibuffer
+(add-hook 'ibuffer-hook
+    (lambda ()
+      (ibuffer-projectile-set-filter-groups)
+      (unless (eq ibuffer-sorting-mode 'alphabetic)
+        (ibuffer-do-sort-by-alphabetic))))
+
+;; Initialize external packages, from Debian.
+;; (let ((startup-file "/usr/share/emacs/site-lisp/debian-startup.el"))
+;;   (if (and (or (not (fboundp 'debian-startup))
+;;                (not (boundp  'debian-emacs-flavor)))
+;;            (file-readable-p startup-file))
+;;       (progn
+;;         (load-file startup-file)
+;;         (setq debian-emacs-flavor 'emacs)
+;;         (mapcar '(lambda (f)
+;;                    (and (not (string= (substring f -3) "/.."))
+;;                         (file-directory-p f)
+;;                         (add-to-list 'load-path f)))
+;;                 (directory-files "/usr/share/emacs/site-lisp" t)))))
+
 ;; Epresent orig
 (autoload 'epresent-run "epresent")
 (add-hook 'org-mode-hook
@@ -65,6 +86,22 @@
 	   (define-key org-mode-map [f3]
 	     'epresent-run)
 	   )))
+
+;; Always enable ggtags for C projects
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+              (ggtags-mode 1))))
+
+;; Enable markdown-mode
+(autoload 'markdown-mode "markdown-mode"
+   "Major mode for editing Markdown files" t)
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
+
+;; (autoload 'gfm-mode "gfm-mode"
+;;    "Major mode for editing GitHub Flavored Markdown files" t)
+;; (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
 
 ;; Fix dired listings ...
 (setq dired-listing-switches "-laGh1v --group-directories-first")
@@ -396,10 +433,10 @@
  '(completion-ignored-extensions
    (quote
     (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
- '(custom-enabled-themes (quote (misterioso)))
+ '(custom-enabled-themes (quote (atom-dark)))
  '(custom-safe-themes
    (quote
-    ("83e584d74b0faea99a414a06dae12f11cd3176fdd4eba6674422539951bcfaa8" "dc54983ec5476b6187e592af57c093a42790f9d8071d9a0163ff4ff3fbea2189" "51b8c4adab95ff23b8f5cf07ea0b9805c8662936fe0d877d61a0dd02b6adc5f6" "118717ce0a2645a0cf240b044999f964577ee10137b1f992b09a317d5073c02d" "dc758223066a28f3c6ef6c42c9136bf4c913ec6d3b710794252dc072a3b92b14" "9122dfb203945f6e84b0de66d11a97de6c9edf28b3b5db772472e4beccc6b3c5" "6c64f651bca94dfaf0b06c1bc1f7b1eadc5f46453206e285401ea00f279df0aa" default)))
+    ("e9460a84d876da407d9e6accf9ceba453e2f86f8b86076f37c08ad155de8223c" "5a0eee1070a4fc64268f008a4c7abfda32d912118e080e18c3c865ef864d1bea" "c3e6b52caa77cb09c049d3c973798bc64b5c43cc437d449eacf35b3e776bf85c" "5e52ce58f51827619d27131be3e3936593c9c7f9f9f9d6b33227be6331bf9881" default)))
  '(delete-active-region t)
  '(delete-selection-mode t)
  '(desktop-restore-in-current-display t)
@@ -407,25 +444,11 @@
  '(diff-switches "-u")
  '(display-battery-mode t)
  '(ediff-window-setup-function (quote ediff-setup-windows-plain))
- '(ensime-sem-high-faces
-   (quote
-    ((var :foreground "#9876aa" :underline
-	  (:style wave :color "yellow"))
-     (val :foreground "#9876aa")
-     (varField :slant italic)
-     (valField :foreground "#9876aa" :slant italic)
-     (functionCall :foreground "#a9b7c6")
-     (implicitConversion :underline
-			 (:color "#808080"))
-     (implicitParams :underline
-		     (:color "#808080"))
-     (operator :foreground "#cc7832")
-     (param :foreground "#a9b7c6")
-     (class :foreground "#4e807d")
-     (trait :foreground "#4e807d" :slant italic)
-     (object :foreground "#6897bb" :slant italic)
-     (package :foreground "#cc7832")
-     (deprecated :strike-through "#a9b7c6"))))
+ '(evil-emacs-state-cursor (quote ("#E57373" hbar)))
+ '(evil-insert-state-cursor (quote ("#E57373" bar)))
+ '(evil-normal-state-cursor (quote ("#FFEE58" box)))
+ '(evil-visual-state-cursor (quote ("#C5E1A5" box)))
+ '(fci-rule-color "#383838")
  '(fill-column 72)
  '(font-use-system-font nil)
  '(global-auto-revert-mode t)
@@ -455,7 +478,13 @@
  '(org-fontify-whole-heading-line t)
  '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(org-support-shift-select t)
- '(projectile-global-mode t)
+ '(package-selected-packages
+   (quote
+    (atom-dark-theme apropospriate-theme centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist ggtags flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
+ '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
+ '(pos-tip-background-color "#3a3a3a")
+ '(pos-tip-foreground-color "#9E9E9E")
+ '(projectile-mode t t (projectile))
  '(scroll-bar-mode nil)
  '(scroll-conservatively 10000)
  '(server-kill-new-buffers t)
