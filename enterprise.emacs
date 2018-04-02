@@ -28,6 +28,9 @@
 ;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+(setq initial-scratch-message    ";; Welcome to Troglobit Enterprise ¯\\_(ツ)_/¯ Emacs!
+;;\n\n")
+
 ;; Who am I?
 (setq user-full-name "Joachim Nilsson")
 (setq user-mail-address "troglobit@gmail.com")
@@ -40,14 +43,15 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 (setq confirm-kill-emacs (quote y-or-n-p))
 
-;; Add MELPA to emacs packages
-(require 'package) ;; You might already have this line
-(add-to-list 'package-archives
-	     '("melpa" . "https://melpa.org/packages/"))
-(when (< emacs-major-version 24)
-  ;; For important compatibility libraries like cl-lib
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
-(package-initialize) ;; You might already have this line
+;;; package setup
+(require 'package)
+(setq load-prefer-newer t
+      package-enable-at-startup nil
+      package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("org" . "http://orgmode.org/elpa/")
+        ("melpa" . "https://melpa.org/packages/")))
+(package-initialize)
 
 ;; Save minibuffer history between sessions
 (setq savehist-additional-variables
@@ -212,8 +216,6 @@
 
 ;; Some useful keybindings, first are the function keys,
 ;; freely adapted after the Borland C IDE.
-(setq initial-scratch-message    ";; Welcome to Troglobit Enterprise ¯\\_(ツ)_/¯ Emacs!
-;;\n\n")
 ;; Key     Function
 ;;   F1    Info
 ;; C-F1    Woman
