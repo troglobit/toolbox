@@ -114,10 +114,15 @@
 ;; Workaround missing dead keys (`~ etc.) in Unity
 (require 'iso-transl)
 
-;; Helpful little thing https://github.com/justbur/emacs-which-key
-;;(require 'which-key)
-;;(which-key-mode t)
-;;(which-key-setup-side-window-right-bottom)
+;; This package will display all available keybindings in a popup.
+;; https://github.com/justbur/emacs-which-key
+(use-package which-key
+  :diminish which-key-mode
+  :config
+  (which-key-mode)
+  (which-key-setup-side-window-bottom)
+  (setq which-key-use-C-h-for-paging t
+	which-key-prevent-C-h-from-cycling t))
 
 ;; Helpful yasnippets
 ;;(yas-global-mode t)
