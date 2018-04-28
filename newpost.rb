@@ -20,7 +20,7 @@ unless ARGV[0]
   exit(1)
 end
 
-dir    = "_posts"
+dir    = "content/post"
 title  = ARGV[0]
 now    = Time.new()
 name   = title.strip.downcase.gsub(/[^0-9A-Za-z.\-]/, '-')
@@ -31,20 +31,13 @@ path   = File.join(dir, filenm)
 
 header = <<-END
 ---
-layout: post
 title: "#{title}"
+subtitle: ""
 date: #{today}
-comments: true
-categories:
+tags: []
 ---
 
 
-
-<!--
-  -- Local Variables:
-  -- mode: markdown
-  -- End:
-  -->
 END
 
 if !File.exists?(dir)
