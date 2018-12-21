@@ -21,9 +21,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-extern char *__progname;
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct addrinfo *result, *rp;
 	struct addrinfo hints;
@@ -31,7 +30,7 @@ int main (int argc, char *argv[])
 	int sd, s;
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s host\n", __progname);
+		fprintf(stderr, "Usage: name HOST\n");
 		return 1;
 	}
 
