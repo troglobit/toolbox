@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -26,8 +27,8 @@ int main(int argc, char *argv[])
 {
 	struct addrinfo *result, *rp;
 	struct addrinfo hints;
-	char host[NI_MAXHOST], service[NI_MAXSERV];
-	int sd, s;
+	char host[NI_MAXHOST];
+	int rc;
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: name HOST\n");
@@ -36,33 +37,38 @@ int main(int argc, char *argv[])
 
 	/* Obtain address(es) matching host/port */
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+	hints.ai_family = AF_UNSPEC;    /* Allow both IPv4 and IPv6 */
 	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-	hints.ai_flags = 0;
-	hints.ai_protocol = 0;          /* Any protocol */
 
-	s = getaddrinfo(argv[1], NULL, &hints, &result);
-	if (s != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+	rc = getaddrinfo(argv[1], NULL, &hints, &result);
+	if (rc) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rc));
 		return 1;
-
-		rp = result;
-		if (rp == NULL) {               /* No address succeeded */
-			fprintf(stderr, "No address\n");
-			return 1;
-		}
-
-		if (getnameinfo(rp->ai_addr, rp->ai_addrlen, host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) {
-			perror("Failed getnameinfo()");
-		} else {
-			printf("%s: %s\n", argv[1], host);
-		}
-		freeaddrinfo(result);           /* No longer needed */
-
-		return 0;
 	}
 
-	return 1;
+	for (rp = result; rp; rp = rp->ai_next) {
+		void *ptr;
+
+		memset(host, 0, sizeof(host));
+		switch (rp->ai_family) {
+		case AF_INET:
+			ptr = &((struct sockaddr_in *)rp->ai_addr)->sin_addr;
+			break;
+
+		case AF_INET6:
+			ptr = &((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr;
+			break;
+
+		default:
+			fprintf(stderr, "Unknown address family\n");
+			continue;
+		}
+
+		inet_ntop(rp->ai_family, ptr, host, rp->ai_addrlen);
+		printf("%s sock_type %d\n", host, rp->ai_socktype);
+	}
+
+	return 0;
 }
 
 /**
