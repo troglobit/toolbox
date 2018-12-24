@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 	for (rp = result; rp; rp = rp->ai_next) {
 		void *ptr;
 
-		memset(host, 0, sizeof(host));
 		switch (rp->ai_family) {
 		case AF_INET:
 			ptr = &((struct sockaddr_in *)rp->ai_addr)->sin_addr;
@@ -64,9 +63,12 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
+		memset(host, 0, sizeof(host));
 		inet_ntop(rp->ai_family, ptr, host, rp->ai_addrlen);
-		printf("%s sock_type %d\n", host, rp->ai_socktype);
+		printf("%s\n", host);
 	}
+
+	freeaddrinfo(result);
 
 	return 0;
 }
