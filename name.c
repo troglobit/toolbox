@@ -22,25 +22,19 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
-int main(int argc, char *argv[])
+static int in_addr(char *name)
 {
 	struct addrinfo *result, *rp;
 	struct addrinfo hints;
 	char host[NI_MAXHOST];
 	int rc;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: name HOST\n");
-		return 1;
-	}
-
 	/* Obtain address(es) matching host/port */
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;    /* Allow both IPv4 and IPv6 */
 	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 
-	rc = getaddrinfo(argv[1], NULL, &hints, &result);
+	rc = getaddrinfo(name, NULL, &hints, &result);
 	if (rc) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rc));
 		return 1;
@@ -71,6 +65,56 @@ int main(int argc, char *argv[])
 	freeaddrinfo(result);
 
 	return 0;
+}
+
+static int in_name(char *addr)
+{
+	struct sockaddr_in6 sin6;
+	struct sockaddr_in sin;
+	struct sockaddr *sa;
+	socklen_t len;
+	char host[NI_MAXHOST];
+	int rc;
+
+	if (!addr) {
+		fprintf(stderr, "Missing argument\n");
+		return 1;
+	}
+
+	if (strchr(addr, ':')) {
+		sin6.sin6_family = AF_INET6;
+		inet_pton(AF_INET6, addr, &sin6.sin6_addr);
+		len = sizeof(sin6);
+		sa = (struct sockaddr *)&sin6;
+	} else {
+		sin.sin_family = AF_INET;
+		inet_pton(AF_INET, addr, &sin.sin_addr);
+		len = sizeof(sin);
+		sa = (struct sockaddr *)&sin;
+	}
+
+	rc = getnameinfo(sa, len, host, sizeof(host), NULL, 0, 0);
+	if (rc) {
+		fprintf(stderr, "getnameinfo: %s\n", gai_strerror(rc));
+		return 1;
+	}
+
+	printf("%s\n", host);
+
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Usage: name [-n] HOST\n");
+		return 1;
+	}
+
+	if (!strcmp(argv[1], "-n"))
+		return in_name(argv[2]);
+
+	return in_addr(argv[1]);
 }
 
 /**
