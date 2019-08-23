@@ -101,7 +101,7 @@ lxc.network.type       = veth
 # Interface name in the host
 lxc.network.veth.pair  = $RIGHT
 # Interface name in the container
-lxc.network.name       = left
+lxc.network.name       = right
 lxc.network.flags      = up
 lxc.network.link       = $RIGHT_BRIDGE
 # lxc.network.hwaddr     = Automatically generated if left out
@@ -112,7 +112,7 @@ fi
 
 # print startup instruction
 cd ..
-echo "Virtual machine created, start it as:"
-echo "     # cd $PWD"
-echo "     # lxc-execute -n $DIR -f $DIR/lxc.conf -- /sbin/mrouted"
+echo "Linux Container (LXC) created, start it as:"
+echo "      cd $PWD"
+echo "      lxc-execute -n $DIR -f $DIR/lxc.conf -- /sbin/mrouted"
 echo
