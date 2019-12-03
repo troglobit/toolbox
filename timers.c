@@ -37,8 +37,8 @@ struct timer {
 
 static LIST_HEAD(, timer) tmr_head = LIST_HEAD_INITIALIZER();
 
-static struct timespec tmr_now;
-static int tmr_fd[2];
+static struct timespec timer_now;
+static int timer_fd[2];
 
 /*
  * create periodic timer (seconds)
@@ -67,7 +67,7 @@ static int __timer_start(void)
 
 	LIST_FOREACH(tmr, &tmr_head, tmr_link) {
 		if (tmr->tmr_timeout == 0)
-			tmr->tmr_timeout = tmr_now.tv_sec + tmr->tmr_period;
+			tmr->tmr_timeout = timer_now.tv_sec + tmr->tmr_period;
 	}
 
 	next = LIST_FIRST(&tmr_head);
@@ -76,7 +76,7 @@ static int __timer_start(void)
 			next = tmr;
 	}
 
-	sec = next->tmr_timeout - tmr_now.tv_sec;
+	sec = next->tmr_timeout - timer_now.tv_sec;
 	if (sec <= 0)
 		sec = 1;
 
@@ -91,7 +91,7 @@ int timer_start(void)
 	if (LIST_EMPTY(&tmr_head))
 		return -1;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &tmr_now) < 0)
+	if (clock_gettime(CLOCK_MONOTONIC, &timer_now) < 0)
 		return -1;
 
 	return __timer_start();
@@ -107,9 +107,9 @@ void timer_run(int sd)
 
 	(void)read(sd, &dummy, 1);
 
-	clock_gettime(CLOCK_MONOTONIC, &tmr_now);
+	clock_gettime(CLOCK_MONOTONIC, &timer_now);
 	LIST_FOREACH(tmr, &tmr_head, tmr_link) {
-		if (tmr->tmr_timeout > tmr_now.tv_sec)
+		if (tmr->tmr_timeout > timer_now.tv_sec)
 			continue;
 
 		if (tmr->tmr_cb)
@@ -126,7 +126,7 @@ void timer_run(int sd)
 static void sigalarm_handler(int signo)
 {
 	(void)signo;
-	(void)write(tmr_fd[1], "!", 1);
+	(void)write(timer_fd[1], "!", 1);
 }
 
 /*
@@ -136,20 +136,20 @@ int timer_init(void (**cb)(int))
 {
 	struct sigaction sa;
 
-	if (pipe(tmr_fd))
+	if (pipe(timer_fd))
 		return -1;
 
 	sa.sa_handler = sigalarm_handler;
 	sa.sa_flags = SA_RESTART;
 	sigemptyset(&sa.sa_mask);
 	if (sigaction(SIGALRM, &sa, NULL)) {
-		close(tmr_fd[0]);
-		close(tmr_fd[1]);
+		close(timer_fd[0]);
+		close(timer_fd[1]);
 		return -1;
 	}
 
 	*cb = timer_run;
-	return tmr_fd[0];
+	return timer_fd[0];
 }
 
 /*
@@ -157,11 +157,18 @@ int timer_init(void (**cb)(int))
  */
 int timer_exit(int fd)
 {
-	if (fd != tmr_fd[0])
+	struct timer *tmr, *tmp;
+
+	if (fd != timer_fd[0])
 		return -1;
 
-	close(tmr_fd[0]);
-	close(tmr_fd[1]);
+	close(timer_fd[0]);
+	close(timer_fd[1]);
+
+	LIST_FOREACH_SAFE(tmr, &tmr_head, tmr_link, tmp) {
+		LIST_REMOVE(tmr, tmr_link);
+		free(tmr);
+	}
 
 	return 0;
 }
@@ -185,15 +192,17 @@ static void hej(void *arg)
 
 static void timeout(void *arg)
 {
-	(void)arg;
+	int *forever = (int *)arg;
+
 	fprintf(stderr, "Timeout!");
-	exit(0);
+	*forever = 0;
 }
 
 int main(void)
 {
 	struct pollfd pfd[1];
 	void (*cb)(int);
+	int forever = 1;
 	int pnum;
 	int fd;
 
@@ -204,14 +213,14 @@ int main(void)
 	printf("Starting, timer fd: %d\n", fd);
 	timer_add(1, line, NULL);
 	timer_add(3, hej, NULL);
-	timer_add(11, timeout, NULL);
+	timer_add(11, timeout, &forever);
 	timer_start();
 
 	pfd[0].fd = fd;
 	pfd[0].events = POLLIN;
 	pnum = 1;
 
-	while (1) {
+	while (forever) {
 		int i, rc;
 
 		rc = poll(pfd, 1, -1);
@@ -228,8 +237,8 @@ int main(void)
 				cb(pfd[i].fd);
 		}
 	}
-	
-	return 0;
+
+	return timer_exit(fd);
 }
 #endif /* UNITTEST */
 
