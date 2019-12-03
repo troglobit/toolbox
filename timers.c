@@ -1,6 +1,6 @@
-/* POSIX Timers + pipe(2) => Portable select(2):able timers
+/* POSIX Timers + pipe(2) => Portable poll(2):able UNIX timers
  *
- * Copyright (c) 2017  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2017-2019  Joachim Nilsson <troglobit@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
+#include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <string.h>		/* memset() */
 #include <stdlib.h>		/* malloc() */
@@ -23,126 +26,75 @@
 #include "queue.h"
 
 struct timer {
-	LIST_ENTRY(timer) link;
+	LIST_ENTRY(timer) tmr_link;
 
-	int             period;	/* period time in seconds */
-	struct timespec timeout;
+	int      tmr_period;	/* period time in seconds */
+	time_t   tmr_timeout;
 
-	void (*cb)(void *arg);
-	void *arg;
+	void   (*tmr_cb)(void *arg);
+	void    *tmr_arg;
 };
 
-static timer_t timer;
-static int timerfd[2];
-static LIST_HEAD(, timer) tl = LIST_HEAD_INITIALIZER();
+static LIST_HEAD(, timer) tmr_head = LIST_HEAD_INITIALIZER();
 
-
-static int set(struct timer *t, struct timespec *now)
-{
-	t->timeout.tv_sec  = now->tv_sec + t->period;
-	t->timeout.tv_nsec = now->tv_nsec;
-}
-
-static int expired(struct timer *t, struct timespec *now)
-{
-	if (t->timeout.tv_sec  <= now->tv_sec &&
-	    t->timeout.tv_nsec <= now->tv_nsec)
-		return 1;
-
-	return 0;
-}
-
-static struct timer *compare(struct timer *a, struct timer *b)
-{
-	if (a->timeout.tv_sec <= b->timeout.tv_sec) {
-		if (a->timeout.tv_nsec <= b->timeout.tv_nsec)
-			return a;
-
-		return b;
-	}
-
-	return b;
-}
-
-/* Write to pipe to create an event for select() on SIGALRM */
-static void sigalarm_handler(int signo)
-{
-	char buf[] = "!";
-
-	(void)signo;
-	if (write(timerfd[1], "!", 1) < 0)
-		;
-}
-
-/*
- * Register signal pipe and callbacks
- */
-int timer_init(void)
-{
-	struct sigaction sa;
-
-	if (pipe(timerfd))
-		return -1;
-
-	sa.sa_handler = sigalarm_handler;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGALRM, &sa, NULL);
-
-	/* NULL means SIGALRM */
-	if (timer_create(CLOCK_MONOTONIC, NULL, &timer))
-		return -1;
-
-	return 0;
-}
+static struct timespec tmr_now;
+static int tmr_fd[2];
 
 /*
  * create periodic timer (seconds)
  */
 int timer_add(int period, void (*cb)(void *), void *arg)
 {
-	struct timer *t;
-	struct timespec now;
+	struct timer *tmr;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &now) < 0)
+	tmr = calloc(1, sizeof(*tmr));
+	if (!tmr)
 		return -1;
 
-	t = malloc(sizeof(*t));
-	if (!t)
-		return -1;
+	tmr->tmr_period = period;
+	tmr->tmr_cb     = cb;
+	tmr->tmr_arg    = arg;
 
-	t->period = period;
-	t->cb     = cb;
-	t->arg    = arg;
-
-	set(t, &now);
-
-	LIST_INSERT_HEAD(&tl, t, link);
+	LIST_INSERT_HEAD(&tmr_head, tmr, tmr_link);
 
 	return 0;
+}
+
+static int __timer_start(void)
+{
+	struct timer *next, *tmr;
+	time_t sec;
+
+	LIST_FOREACH(tmr, &tmr_head, tmr_link) {
+		if (tmr->tmr_timeout == 0)
+			tmr->tmr_timeout = tmr_now.tv_sec + tmr->tmr_period;
+	}
+
+	next = LIST_FIRST(&tmr_head);
+	LIST_FOREACH(tmr, &tmr_head, tmr_link) {
+		if (next->tmr_timeout > tmr->tmr_timeout)
+			next = tmr;
+	}
+
+	sec = next->tmr_timeout - tmr_now.tv_sec;
+	if (sec <= 0)
+		sec = 1;
+
+	return alarm(sec);
 }
 
 /*
  * start timers
  */
-void timer_start(void)
+int timer_start(void)
 {
-	struct timer *next, *entry;
-	struct timespec now;
-	struct itimerspec it;
+	if (LIST_EMPTY(&tmr_head))
+		return -1;
 
-	if (LIST_EMPTY(&tl))
-		return;
+	if (clock_gettime(CLOCK_MONOTONIC, &tmr_now) < 0)
+		return -1;
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	next = LIST_FIRST(&tl);
-	LIST_FOREACH(entry, &tl, link)
-		next = compare(next, entry);
-
-	memset(&it, 0, sizeof(it));
-	it.it_value.tv_sec  = next->timeout.tv_sec - now.tv_sec;
-	it.it_value.tv_nsec = 0;
-	timer_settime(timer, 0, &it, NULL);
+	return __timer_start();
 }
 
 /*
@@ -150,23 +102,68 @@ void timer_start(void)
  */
 void timer_run(int sd)
 {
+	struct timer *tmr;
 	char dummy;
-	struct timespec now;
-	struct timer *entry, *next;
 
-	if (read(sd, &dummy, 1) < 0)
-		;
+	(void)read(sd, &dummy, 1);
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	LIST_FOREACH(entry, &tl, link) {
-		if (expired(entry, &now)) {
-			if (entry->cb)
-				entry->cb(entry->arg);
-			set(entry, &now);
-		}
+	clock_gettime(CLOCK_MONOTONIC, &tmr_now);
+	LIST_FOREACH(tmr, &tmr_head, tmr_link) {
+		if (tmr->tmr_timeout > tmr_now.tv_sec)
+			continue;
+
+		if (tmr->tmr_cb)
+			tmr->tmr_cb(tmr->tmr_arg);
+		tmr->tmr_timeout = 0;
 	}
 
-	timer_start();
+	__timer_start();
+}
+
+/*
+ * Write to pipe to create an event on SIGALRM
+ */
+static void sigalarm_handler(int signo)
+{
+	(void)signo;
+	(void)write(tmr_fd[1], "!", 1);
+}
+
+/*
+ * register signal pipe and callback
+ */
+int timer_init(void (**cb)(int))
+{
+	struct sigaction sa;
+
+	if (pipe(tmr_fd))
+		return -1;
+
+	sa.sa_handler = sigalarm_handler;
+	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask);
+	if (sigaction(SIGALRM, &sa, NULL)) {
+		close(tmr_fd[0]);
+		close(tmr_fd[1]);
+		return -1;
+	}
+
+	*cb = timer_run;
+	return tmr_fd[0];
+}
+
+/*
+ * deregister signal pipe and callbacks
+ */
+int timer_exit(int fd)
+{
+	if (fd != tmr_fd[0])
+		return -1;
+
+	close(tmr_fd[0]);
+	close(tmr_fd[1]);
+
+	return 0;
 }
 
 /***************************************** UNIT TEST **************************************/
@@ -195,23 +192,41 @@ static void timeout(void *arg)
 
 int main(void)
 {
-	int ret;
+	struct pollfd pfd[1];
+	void (*cb)(int);
+	int pnum;
+	int fd;
 
-	timer_init();
+	fd = timer_init(&cb);
+	if (-1 == fd)
+		err(1, "Failed initializing timers");
+
+	printf("Starting, timer fd: %d\n", fd);
 	timer_add(1, line, NULL);
 	timer_add(3, hej, NULL);
-	timer_add(10, timeout, NULL);
+	timer_add(11, timeout, NULL);
 	timer_start();
 
-	while (1) {
-		int nfds = timerfd[1] + 1;
-		fd_set fds;
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
+	pnum = 1;
 
-		FD_ZERO(&fds);
-		FD_SET(timerfd[0], &fds);
-		ret = select(nfds, &fds, NULL, NULL, NULL);
-		if (FD_ISSET(timerfd[0], &fds))
-			timer_run(timerfd[0]);
+	while (1) {
+		int i, rc;
+
+		rc = poll(pfd, 1, -1);
+		if (rc == -1) {
+			if (EINTR == errno)
+				continue;
+
+			err(1, "Failed poll()");
+		}
+
+		/* Find active fd and its callback */
+		for (i = 0; i < pnum; i++) {
+			if (pfd[i].revents & POLLIN)
+				cb(pfd[i].fd);
+		}
 	}
 	
 	return 0;
@@ -220,7 +235,7 @@ int main(void)
 
 /**
  * Local Variables:
- *  compile-command: "CPPFLAGS=-DUNITTEST LDLIBS=-lrt make timers && ./timers"
+ *  compile-command: "CFLAGS='-pg -W -Wall -Wextra' CPPFLAGS=-DUNITTEST make timers && ./timers"
  *  indent-tabs-mode: t
  *  c-file-style: "linux"
  * End:
