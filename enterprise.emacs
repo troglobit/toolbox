@@ -14,7 +14,7 @@
 ;; Save it as ~/.emacs (dot emacs in your home directory) to activate
 ;; and then (re)start your Emacs.
 ;;
-;; Copyright (c) 2009-2016  Joachim Nilsson <troglobit@gmail.com>
+;; Copyright (c) 2009-2019  Joachim Nilsson <troglobit@gmail.com>
 ;;
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -43,15 +43,31 @@
 (fset 'yes-or-no-p 'y-or-n-p)
 (setq confirm-kill-emacs (quote y-or-n-p))
 
+;; Setup MacBook cmd key as Meta
+(setq mac-option-modifier 'super)
+(setq mac-command-modifier 'meta)
+
 ;;; package setup
-(require 'package)
 (setq load-prefer-newer t
+      use-package-always-ensure t
       package-enable-at-startup nil
       package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("org" . "http://orgmode.org/elpa/")
         ("melpa" . "https://melpa.org/packages/")))
+
+(require 'package)
 (package-initialize)
+
+;; Bootstrap `use-package': if not installed, refresh remotes, install it.
+;; https://github.com/jwiegley/use-package
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+;; for now accept that this is magic
+(eval-when-compile
+  (require 'use-package))
 
 ;; Save minibuffer history between sessions
 (setq savehist-additional-variables
@@ -97,6 +113,10 @@
             (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
               (ggtags-mode 1))))
 
+;; When saving a file that starts with #!, make it executable.
+(add-hook 'after-save-hook
+          'executable-make-buffer-file-executable-if-script-p)
+
 ;; Enable markdown-mode
 (autoload 'markdown-mode "markdown-mode"
    "Major mode for editing Markdown files" t)
@@ -111,18 +131,99 @@
 (setq dired-listing-switches "-laGh1v --group-directories-first")
 ;;(dired-turn-on-discover t)
 
+;; Enable recentf-mode and remember a lot of files.
+(recentf-mode 1)
+(defvar recentf-max-saved-items)
+(setq recentf-max-saved-items 200)
+
 ;; Workaround missing dead keys (`~ etc.) in Unity
 (require 'iso-transl)
 
+;; PACKAGES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'use-package)
+
+(use-package gruvbox-theme
+  :ensure t
+  :init  (load-theme 'gruvbox-dark-medium t))
+
+;;
+(use-package ido-completing-read+
+  :ensure t)
+
+(use-package markdown-mode
+  :ensure t)
+
+;; Auto-detect indent settings
+(use-package dtrt-indent
+  :ensure t)
+
+(use-package projectile
+  :ensure t)
+
+(use-package ibuffer-projectile
+  :ensure t)
+
+(use-package flycheck-clang-tidy
+  :after flycheck
+  :hook (flycheck-mode . flycheck-clang-tidy-setup))
+
+;; GNU Global Tags
+(use-package ggtags
+  :ensure t
+  :commands ggtags-mode
+  :diminish ggtags-mode
+  :bind (("M-*" . pop-tag-mark)
+         ("C-c t s" . ggtags-find-other-symbol)
+         ("C-c t h" . ggtags-view-tag-history)
+         ("C-c t r" . ggtags-find-reference)
+         ("C-c t f" . ggtags-find-file)
+         ("C-c t c" . ggtags-create-tags))
+  :init
+  (add-hook 'c-mode-common-hook
+            #'(lambda ()
+                (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+                  (ggtags-mode 1)))))
+
+;; Powerline is a neat modeline replacement
+(use-package powerline
+  :ensure t
+  :init (powerline-default-theme))
+
+;; It's useful to be able to restart emacs from inside emacs.
+(use-package restart-emacs)
+
+;; Project Handling
+(use-package projectile
+  :ensure t
+  :init
+  :bind-keymap (("C-c p" . projectile-command-map))
+  :config (projectile-global-mode t))
+
+;; magit
+(use-package magit
+	     :commands (magit-status projectile-vc)
+	     :bind (("C-c m" . magit-status)
+		    ("C-c l" . magit-log-buffer-file)
+		    ("C-c M-g" . magit-dispatch-popup))
+	     :config (use-package ido-completing-read+)
+	     (setq magit-popup-use-prefix-argument 'default
+		   magit-completing-read-function 'magit-ido-completing-read
+		   global-magit-file-mode 't
+		   magit-commit-arguments (quote ("--signoff"))
+		   magit-commit-signoff 't
+		   magit-diff-refine-hunk (quote all)))
+
+(use-package magit-popup)
+
 ;; This package will display all available keybindings in a popup.
 ;; https://github.com/justbur/emacs-which-key
-(use-package which-key
-  :diminish which-key-mode
-  :config
-  (which-key-mode)
-  (which-key-setup-side-window-bottom)
-  (setq which-key-use-C-h-for-paging t
-	which-key-prevent-C-h-from-cycling t))
+;; (use-package which-key
+;;   :diminish which-key-mode
+;;   :config
+;;   (which-key-mode)
+;;   (which-key-setup-side-window-bottom)
+;;   (setq which-key-use-C-h-for-paging t
+;; 	which-key-prevent-C-h-from-cycling t))
 
 ;; Helpful yasnippets
 ;;(yas-global-mode t)
@@ -131,7 +232,7 @@
 ;;(require 'tbemail)
 
 ;; For Flex & Bison
-(require 'bison-mode)
+;;(require 'bison-mode)
 
 ;; Beautify Emacs
 ;; Add fringes
@@ -162,13 +263,6 @@
 ;; Nyan Cat buffer position :-)
 ;; (nyan-mode t)
 
-;; Smart modeline
-;; (setq sml/theme 'dark)
-;; (setq sml/theme 'light)
-;; (setq sml/theme 'respectful)
-;;(setq sml/theme 'smart-mode-line-powerline)
-;;(sml/setup)
-
 ;; ANSI colors in Emacs compilation buffer
 ;; http://stackoverflow.com/questions/3072648/cucumbers-ansi-colors-messing-up-emacs-compilation-buffer
 (ignore-errors
@@ -181,15 +275,6 @@
 ;; Complete-anything http://company-mode.github.io/
 ;;(require 'company)
 ;;(add-to-list 'company-backends 'company-c-headers)
-
-;; http://github.com/k-talo/smooth-scroll.el
-;; https://www.reddit.com/r/emacs/comments/3idv1c/is_it_possible_for_emacs_to_approach_the_fluidity/
-;;(require 'smooth-scroll)
-;;(smooth-scroll-mode t)
-;;(global-set-key [(meta  down)]  'scroll-up-1)
-;;(global-set-key [(meta  up)]    'scroll-down-1)
-;; (global-set-key [(meta  left)]  'scroll-right-1)
-;; (global-set-key [(meta  right)] 'scroll-left-1)
 
 ;; Pimp org-files
 ;; https://thraxys.wordpress.com/2016/01/14/pimp-up-your-org-agenda/
@@ -315,7 +400,7 @@
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2016  Westermo Teleindustri AB\n")
+  (insert " * Copyright (C) 2019  Westermo Network Technologies AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -326,7 +411,7 @@
 (defun insert-include-body () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2016  Westermo Teleindustri AB\n")
+  (insert " * Copyright (C) 2019  Westermo Network Technologies\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -363,7 +448,7 @@
 (defun insert-isc-license () (interactive)
   (insert "/*\n")
   (insert " *\n")
-  (insert " * Copyright (c) 2016  Joachim Nilsson <troglobit@gmail.com>\n")
+  (insert " * Copyright (c) 2019  Joachim Nilsson <troglobit@gmail.com>\n")
   (insert " *\n")
   (insert " * Permission to use, copy, modify, and/or distribute this software for any\n")
   (insert " * purpose with or without fee is hereby granted, provided that the above\n")
@@ -440,10 +525,10 @@
  '(completion-ignored-extensions
    (quote
     (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
- '(custom-enabled-themes (quote (atom-dark)))
+ '(custom-enabled-themes (quote (gruvbox-dark-medium)))
  '(custom-safe-themes
    (quote
-    ("e9460a84d876da407d9e6accf9ceba453e2f86f8b86076f37c08ad155de8223c" "5a0eee1070a4fc64268f008a4c7abfda32d912118e080e18c3c865ef864d1bea" "c3e6b52caa77cb09c049d3c973798bc64b5c43cc437d449eacf35b3e776bf85c" "5e52ce58f51827619d27131be3e3936593c9c7f9f9f9d6b33227be6331bf9881" default)))
+    ("84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default)))
  '(delete-active-region t)
  '(delete-selection-mode t)
  '(desktop-restore-in-current-display t)
@@ -461,6 +546,7 @@
  '(global-auto-revert-mode t)
  '(global-company-mode nil)
  '(global-magit-file-mode t)
+ '(global-prettify-symbols-mode t)
  '(graphviz-dot-preview-extension "svg")
  '(highlight-indent-guides-auto-enabled nil)
  '(highlight-symbol-colors
@@ -474,31 +560,42 @@
  '(inhibit-startup-screen t)
  '(ispell-dictionary "american")
  '(magit-commit-arguments (quote ("--signoff")))
- '(magit-commit-signoff t)
+ '(magit-commit-signoff t t)
  '(magit-diff-refine-hunk (quote all))
  '(magit-diff-use-overlays nil)
+ '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(nrepl-message-colors
    (quote
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(org-fontify-done-headline t)
  '(org-fontify-quote-and-verse-blocks t)
  '(org-fontify-whole-heading-line t)
- '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(org-support-shift-select t)
  '(package-selected-packages
    (quote
-    (atom-dark-theme apropospriate-theme centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist ggtags flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
+    (gruvbox-theme ecb ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
- '(projectile-mode t t (projectile))
+ '(projectile-mode t nil (projectile))
+ '(save-place-mode 1)
  '(scroll-bar-mode nil)
  '(scroll-conservatively 10000)
+ '(scroll-margin 0)
+ '(scroll-preserve-screen-position t)
  '(server-kill-new-buffers t)
  '(server-mode t)
  '(show-paren-mode t)
  '(split-height-threshold 200)
  '(split-width-threshold 140)
+ '(tetris-x-colors
+   [[229 192 123]
+    [97 175 239]
+    [209 154 102]
+    [224 108 117]
+    [152 195 121]
+    [198 120 221]
+    [86 182 194]])
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
  '(tramp-syntax (quote default))
@@ -534,4 +631,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 98 :width normal)))))
+ '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 92 :width normal)))))
