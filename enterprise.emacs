@@ -75,13 +75,6 @@
       savehist-file "~/.emacs.d/savehist")
 (savehist-mode t)
 
-;; Use projectile to sort ibuffer
-(add-hook 'ibuffer-hook
-    (lambda ()
-      (ibuffer-projectile-set-filter-groups)
-      (unless (eq ibuffer-sorting-mode 'alphabetic)
-        (ibuffer-do-sort-by-alphabetic))))
-
 ;; Initialize external packages, from Debian.
 ;; (let ((startup-file "/usr/share/emacs/site-lisp/debian-startup.el"))
 ;;   (if (and (or (not (fboundp 'debian-startup))
@@ -157,12 +150,6 @@
 (use-package dtrt-indent
   :ensure t)
 
-(use-package projectile
-  :ensure t)
-
-(use-package ibuffer-projectile
-  :ensure t)
-
 (use-package flycheck-clang-tidy
   :after flycheck
   :hook (flycheck-mode . flycheck-clang-tidy-setup))
@@ -199,6 +186,34 @@
   :bind-keymap (("C-c p" . projectile-command-map))
   :config (projectile-global-mode t))
 
+(use-package ibuffer-projectile)
+(use-package ibuffer
+  ;; A different buffer view.
+  :bind ("C-x C-b" . ibuffer)
+  :init
+  (progn
+    (require 'ibuf-ext)
+
+    (setq ibuffer-filter-group-name-face 'success) ; TODO: declare it's own face.
+    (setq ibuffer-show-empty-filter-groups nil)
+    (add-to-list 'ibuffer-never-show-predicates "^\\*")
+
+    (add-hook 'ibuffer-mode-hooks 'ibuffer-auto-mode)
+
+    (setq ibuffer-formats
+          '((mark modified read-only " "
+		  (name 18 18 :left :elide) " "
+		  (size 9 -1 :right) " "
+		  (mode 16 16 :left :elide) " " filename-and-process)
+            (mark " " (name 16 -1) " " filename)))))
+
+;; Use projectile to sort ibuffer
+(add-hook 'ibuffer-hook
+    (lambda ()
+      (ibuffer-projectile-set-filter-groups)
+      (unless (eq ibuffer-sorting-mode 'alphabetic)
+        (ibuffer-do-sort-by-alphabetic))))
+
 ;; magit
 (use-package magit
 	     :commands (magit-status projectile-vc)
@@ -224,6 +239,11 @@
 ;;   (which-key-setup-side-window-bottom)
 ;;   (setq which-key-use-C-h-for-paging t
 ;; 	which-key-prevent-C-h-from-cycling t))
+
+;; Helpful little thing https://github.com/justbur/emacs-which-key
+;;(require 'which-key)
+;;(which-key-mode t)
+;;(which-key-setup-side-window-right-bottom)
 
 ;; Helpful yasnippets
 ;;(yas-global-mode t)
@@ -479,9 +499,6 @@
 (global-set-key "\C-t\C-h" 'insert-function-header) ; Header
 (global-set-key "\C-t\C-i" 'insert-include-body)    ; Include
 
-;; Override buffer listing with new ibuffer
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-
 ;; Bind C-c m to magit-status
 (global-set-key (kbd "C-c m") 'magit-status)
 
@@ -560,7 +577,7 @@
  '(inhibit-startup-screen t)
  '(ispell-dictionary "american")
  '(magit-commit-arguments (quote ("--signoff")))
- '(magit-commit-signoff t t)
+ '(magit-commit-signoff t)
  '(magit-diff-refine-hunk (quote all))
  '(magit-diff-use-overlays nil)
  '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
