@@ -133,6 +133,23 @@
 (use-package ido-completing-read+
   :ensure t)
 
+;; Smart M-x for Emacs built on top of ido mode
+(use-package smex
+  :init
+  (global-set-key (kbd "M-x") 'smex))
+
+;; Multiple terminal manager for Emacs
+(use-package multi-term
+  :init
+  (setq multi-term-program "/bin/bash"))
+(require 'multi-term)
+
+;; Mode for Git Commits
+(use-package git-commit)
+
+;; Command to clean up and prettify json.
+(use-package json-mode)
+
 (use-package markdown-mode
   :ensure t
   :commands (markdown-mode gfm-mode)
