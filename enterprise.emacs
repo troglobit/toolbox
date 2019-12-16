@@ -110,16 +110,6 @@
 (add-hook 'after-save-hook
           'executable-make-buffer-file-executable-if-script-p)
 
-;; Enable markdown-mode
-(autoload 'markdown-mode "markdown-mode"
-   "Major mode for editing Markdown files" t)
-(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-
-;; (autoload 'gfm-mode "gfm-mode"
-;;    "Major mode for editing GitHub Flavored Markdown files" t)
-;; (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode))
-
 ;; Fix dired listings ...
 (setq dired-listing-switches "-laGh1v --group-directories-first")
 ;;(dired-turn-on-discover t)
@@ -144,7 +134,13 @@
   :ensure t)
 
 (use-package markdown-mode
-  :ensure t)
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :hook (markdown-mode . flyspell-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "pandoc"))
 
 ;; Auto-detect indent settings
 (use-package dtrt-indent
