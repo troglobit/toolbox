@@ -222,7 +222,8 @@
 		   global-magit-file-mode 't
 		   magit-commit-arguments (quote ("--signoff"))
 		   magit-commit-signoff 't
-		   magit-diff-refine-hunk (quote all)))
+		   magit-diff-refine-hunk (quote all)
+		   magit-diff-use-overlays nil))
 
 (use-package magit-popup)
 
@@ -547,12 +548,7 @@
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diff-switches "-u")
- '(display-battery-mode t)
  '(ediff-window-setup-function (quote ediff-setup-windows-plain))
- '(evil-emacs-state-cursor (quote ("#E57373" hbar)))
- '(evil-insert-state-cursor (quote ("#E57373" bar)))
- '(evil-normal-state-cursor (quote ("#FFEE58" box)))
- '(evil-visual-state-cursor (quote ("#C5E1A5" box)))
  '(fci-rule-color "#383838")
  '(fill-column 72)
  '(font-use-system-font nil)
@@ -572,10 +568,6 @@
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
  '(ispell-dictionary "american")
- '(magit-commit-arguments (quote ("--signoff")))
- '(magit-commit-signoff t)
- '(magit-diff-refine-hunk (quote all))
- '(magit-diff-use-overlays nil)
  '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(nrepl-message-colors
    (quote
