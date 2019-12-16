@@ -1,10 +1,10 @@
 ;; Troglobit Enterprise ¯\_(ツ)_/¯ Emacs                -*-Emacs-LISP-*-
 ;;
-;; This used to be a holy grail I called EnterpriseEmacs, but these days
-;; anyyone can make use of Emacs in so many ways.  The best instrument
-;; I've ever used and I keep learning more every day!
+;; This used to be a holy grail I called EnterpriseEmacs.  These days
+;; Emacs is so much more user friendly, yet still the best instrument
+;; I've ever used, and learn from every day!
 ;;
-;; Emacs is my daily driver, my preferred instrument.  I'm completely
+;; Emacs is my daily driver, my preferred workbench.  I'm completely
 ;; addicted to ido-mode, magit, org-mode, and many more exclusive
 ;; features of Emacs.
 ;;
@@ -12,7 +12,7 @@
 ;; the terms of the ISC License.
 ;;
 ;; Save it as ~/.emacs (dot emacs in your home directory) to activate
-;; and then (re)start your Emacs.
+;; and then (re)start your Emacs to start populating ~/.emacs.d/ ...
 ;;
 ;; Copyright (c) 2009-2019  Joachim Nilsson <troglobit@gmail.com>
 ;;
