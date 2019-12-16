@@ -163,9 +163,19 @@
 (use-package dtrt-indent
   :ensure t)
 
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
 (use-package flycheck-clang-tidy
   :after flycheck
   :hook (flycheck-mode . flycheck-clang-tidy-setup))
+
+;; Directory sidebar
+;; (use-package treemacs
+;;   :bind
+;;   (("C-c t" . treemacs)
+;;    ("s-a" . treemacs)))
 
 ;; GNU Global Tags
 (use-package ggtags
@@ -183,6 +193,34 @@
             #'(lambda ()
                 (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
                   (ggtags-mode 1)))))
+
+;; Complete anything (company)
+(use-package company
+  :ensure t
+  :defer t
+  :init (global-company-mode)
+  :config
+  (progn
+    ;; Use Company for completion
+    (bind-key [remap completion-at-point] #'company-complete company-mode-map)
+
+    (setq company-tooltip-align-annotations t
+          ;; Easy navigation to candidates with M-<n>
+          company-show-numbers t)
+    (setq company-dabbrev-downcase nil))
+  :diminish company-mode)
+
+(use-package company-quickhelp          ; Documentation popups for Company
+  :ensure t
+  :defer t
+  :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
+
+(use-package company-c-headers
+  :ensure t
+  :defer t
+  :init
+  (with-eval-after-load 'company
+    (add-to-list 'company-backends 'company-c-headers)))
 
 ;; Powerline is a neat modeline replacement
 (use-package powerline
@@ -595,7 +633,7 @@
  '(org-support-shift-select t)
  '(package-selected-packages
    (quote
-    (gruvbox-theme ecb ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
+    (gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
