@@ -469,6 +469,10 @@
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 
+;; For Emacs 27.1 tab-bar-mode
+;; (global-set-key '[C-next] 'tab-next)
+;; (global-set-key '[C-prior] 'tab-previous)
+
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
@@ -648,6 +652,7 @@
  '(show-paren-mode t)
  '(split-height-threshold 200)
  '(split-width-threshold 140)
+ '(tab-bar-mode t)
  '(tetris-x-colors
    [[229 192 123]
     [97 175 239]
@@ -691,4 +696,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 92 :width normal)))))
+ '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 92 :width normal))))
+ '(tab-bar-tab ((t (:inherit tab-bar :box (:line-width 1 :style released-button))))))
