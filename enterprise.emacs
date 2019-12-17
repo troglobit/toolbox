@@ -206,7 +206,9 @@
 
     (setq company-tooltip-align-annotations t
           ;; Easy navigation to candidates with M-<n>
-          company-show-numbers t)
+          company-show-numbers t
+	  company-abort-manual-when-too-short t
+	  company-auto-complete 'company-explicit-action-p)
     (setq company-dabbrev-downcase nil))
   :diminish company-mode)
 
@@ -343,10 +345,6 @@
     (when (eq major-mode 'compilation-mode)
       (ansi-color-apply-on-region compilation-filter-start (point-max))))
   (add-hook 'compilation-filter-hook 'my-colorize-compilation-buffer))
-
-;; Complete-anything http://company-mode.github.io/
-;;(require 'company)
-;;(add-to-list 'company-backends 'company-c-headers)
 
 ;; Pimp org-files
 ;; https://thraxys.wordpress.com/2016/01/14/pimp-up-your-org-agenda/
