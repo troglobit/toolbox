@@ -150,13 +150,18 @@
 ;; Command to clean up and prettify json.
 (use-package json-mode)
 
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.yml$"  . yaml-mode)
+	 ("\\.yaml$" . yaml-mode)))
+
 (use-package markdown-mode
   :ensure t
   :commands (markdown-mode gfm-mode)
   :hook (markdown-mode . flyspell-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
+  :mode (("README\\.md$'" . gfm-mode)
+         ("\\.md$'" . markdown-mode)
+         ("\\.markdown$'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 
 ;; Auto-detect indent settings
@@ -687,5 +692,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 92 :width normal))))
+ '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 110 :width normal))))
  '(tab-bar-tab ((t (:inherit tab-bar :box (:line-width 1 :style released-button))))))
