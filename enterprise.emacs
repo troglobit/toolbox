@@ -14,7 +14,7 @@
 ;; Save it as ~/.emacs (dot emacs in your home directory) to activate
 ;; and then (re)start your Emacs to start populating ~/.emacs.d/ ...
 ;;
-;; Copyright (c) 2009-2019  Joachim Nilsson <troglobit@gmail.com>
+;; Copyright (c) 2009-2020  Joachim Nilsson <troglobit@gmail.com>
 ;;
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -479,7 +479,7 @@
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2019  Westermo Network Technologies AB\n")
+  (insert " * Copyright (C) 2020  Westermo Network Technologies AB\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -490,7 +490,7 @@
 (defun insert-include-body () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2019  Westermo Network Technologies\n")
+  (insert " * Copyright (C) 2020  Westermo Network Technologies\n")
   (insert " *\n")
   (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
   (insert " *\n")
@@ -527,7 +527,7 @@
 (defun insert-isc-license () (interactive)
   (insert "/*\n")
   (insert " *\n")
-  (insert " * Copyright (c) 2019  Joachim Nilsson <troglobit@gmail.com>\n")
+  (insert " * Copyright (c) 2020  Joachim Nilsson <troglobit@gmail.com>\n")
   (insert " *\n")
   (insert " * Permission to use, copy, modify, and/or distribute this software for any\n")
   (insert " * purpose with or without fee is hereby granted, provided that the above\n")
