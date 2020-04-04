@@ -125,6 +125,16 @@
 ;; PACKAGES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'use-package)
 
+;; Easy Hugo -- https://github.com/masasam/emacs-easy-hugo
+(use-package easy-hugo
+	     :init
+	     (setq easy-hugo-basedir "~/Troglobit/Bloggy/")
+	     (setq easy-hugo-url "http://troglobit.com")
+	     (setq easy-hugo-sshdomain "fra.troglobit.com:222")
+	     (setq easy-hugo-root "/var/www/fra.troglobit.com/")
+	     (setq easy-hugo-previewtime "300")
+	     :bind ("C-c C-e" . easy-hugo))
+
 (use-package gruvbox-theme
   :ensure t
   :init  (load-theme 'gruvbox-dark-medium t))
@@ -588,26 +598,29 @@
  '(beacon-color "#ec4780")
  '(before-save-hook nil)
  '(c-default-style
-   '((c-mode . "linux")
+   (quote
+    ((c-mode . "linux")
      (c++-mode . "linux")
      (java-mode . "java")
      (awk-mode . "awk")
-     (other . "gnu")))
+     (other . "gnu"))))
  '(column-number-mode t)
  '(company-abort-manual-when-too-short t)
- '(company-auto-complete ''company-explicit-action-p)
- '(compilation-message-face 'default)
+ '(company-auto-complete (quote (quote company-explicit-action-p)))
+ '(compilation-message-face (quote default))
  '(completion-ignored-extensions
-   '(".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d"))
- '(custom-enabled-themes '(gruvbox-dark-medium))
+   (quote
+    (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
+ '(custom-enabled-themes (quote (gruvbox-dark-medium)))
  '(custom-safe-themes
-   '("84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default))
+   (quote
+    ("84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default)))
  '(delete-active-region t)
  '(delete-selection-mode t)
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diff-switches "-u")
- '(ediff-window-setup-function 'ediff-setup-windows-plain)
+ '(ediff-window-setup-function (quote ediff-setup-windows-plain))
  '(fci-rule-color "#383838")
  '(fill-column 72)
  '(font-use-system-font nil)
@@ -618,24 +631,28 @@
  '(graphviz-dot-preview-extension "svg")
  '(highlight-indent-guides-auto-enabled nil)
  '(highlight-symbol-colors
-   '("#FFEE58" "#C5E1A5" "#80DEEA" "#64B5F6" "#E1BEE7" "#FFCC80"))
+   (quote
+    ("#FFEE58" "#C5E1A5" "#80DEEA" "#64B5F6" "#E1BEE7" "#FFCC80")))
  '(highlight-symbol-foreground-color "#E0E0E0")
- '(highlight-tail-colors '(("#ec4780" . 0) ("#424242" . 100)))
- '(ido-mode 'both nil (ido))
- '(indicate-buffer-boundaries '((top . left) (bottom . right)))
+ '(highlight-tail-colors (quote (("#ec4780" . 0) ("#424242" . 100))))
+ '(ido-mode (quote both) nil (ido))
+ '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
  '(ispell-dictionary "american")
- '(mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control))))
+ '(menu-bar-mode nil)
+ '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
  '(nrepl-message-colors
-   '("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3"))
+   (quote
+    ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
  '(org-fontify-done-headline t)
  '(org-fontify-quote-and-verse-blocks t)
  '(org-fontify-whole-heading-line t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag))
- '(pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
+   (quote
+    (gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
+ '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
  '(projectile-mode t nil (projectile))
@@ -660,11 +677,12 @@
     [86 182 194]])
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
- '(tramp-syntax 'default)
- '(uniquify-buffer-name-style 'forward nil (uniquify))
+ '(tramp-syntax (quote default) nil (tramp))
+ '(uniquify-buffer-name-style (quote forward) nil (uniquify))
  '(vc-annotate-background "#2B2B2B")
  '(vc-annotate-color-map
-   '((20 . "#BC8383")
+   (quote
+    ((20 . "#BC8383")
      (40 . "#CC9393")
      (60 . "#DFAF8F")
      (80 . "#D0BF8F")
@@ -681,7 +699,7 @@
      (300 . "#7CB8BB")
      (320 . "#8CD0D3")
      (340 . "#94BFF3")
-     (360 . "#DC8CC3")))
+     (360 . "#DC8CC3"))))
  '(vc-annotate-very-old-color "#DC8CC3")
  '(which-function-mode t))
 
@@ -692,5 +710,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 110 :width normal))))
+ '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 98 :width normal))))
  '(tab-bar-tab ((t (:inherit tab-bar :box (:line-width 1 :style released-button))))))
