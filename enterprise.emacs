@@ -174,6 +174,12 @@
          ("\\.markdown$'" . markdown-mode))
   :init (setq markdown-command "pandoc"))
 
+(use-package markdown-toc
+  :ensure t)
+
+(use-package dpkg-dev-el
+  :ensure t)
+
 ;; Auto-detect indent settings
 (use-package dtrt-indent
   :ensure t)
