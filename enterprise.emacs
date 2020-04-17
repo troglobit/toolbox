@@ -165,6 +165,12 @@
   :mode (("\\.yml$"  . yaml-mode)
 	 ("\\.yaml$" . yaml-mode)))
 
+(use-package dts-mode
+  :ensure t
+  :mode (("\\.dts$"  . dts-mode)
+	 ("\\.dtsi$" . dts-mode)
+	 ("\\.dts-*$" . dts-mode)))
+
 (use-package markdown-mode
   :ensure t
   :commands (markdown-mode gfm-mode)
