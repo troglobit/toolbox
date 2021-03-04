@@ -1,6 +1,6 @@
 /* Simple /bin/tree replacement
  *
- * Copyright (c) 2015  Joachim Nilsson <troglobit@gmail.com>
+ * Copyright (c) 2015-2021  Joachim Wiberg <troglobit@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,13 +26,13 @@
 #include <unistd.h>
 
 #define NONE " "
-#define PIPE silent ? "|"  : "│"
-#define FORK silent ? "|-" : "├─"
-#define END  silent ? "`-" : "└─"
+#define PIPE plain ? "|"  : "│"
+#define FORK plain ? "|-" : "├─"
+#define END  plain ? "`-" : "└─"
 
 static int all = 0;
 static int verbose = 0;
-static int silent = 0;
+static int plain = 0;
 
 static int filter(const struct dirent *entry)
 {
@@ -128,7 +128,7 @@ int tree(char *path, int show_perms)
 
 static int usage(int rc)
 {
-	fprintf(stderr, "usage: tree [-v] [-s] PATH\n");
+	fprintf(stderr, "usage: tree [-?hpv] PATH\n");
 	return rc;
 }
 
@@ -139,10 +139,10 @@ int main(int argc, char *argv[])
 	if (argc < 2)
 		return usage(1);
 
-	while ((c = getopt(argc, argv, "h?sv")) != EOF) {
+	while ((c = getopt(argc, argv, "h?pv")) != EOF) {
 		switch(c) {
-		case 's':
-			silent = 1;
+		case 'p':
+			plain = 1;
 			break;
 
 		case 'v':
