@@ -16,6 +16,7 @@
  */
 
 #include <errno.h>
+#include <getopt.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define NONE " "
+#define PIPE silent ? "|"  : "│"
+#define FORK silent ? "|-" : "├─"
+#define END  silent ? "`-" : "└─"
+
 static int all = 0;
+static int verbose = 0;
+static int silent = 0;
 
 static int filter(const struct dirent *entry)
 {
@@ -79,11 +87,11 @@ static int descend(char *path, int show_perms, char *pfx)
 			char dir[80];
 
 			if (i + 1 == n) {
-				printf("%s `- ", pfx);
+				printf("%s%s ", pfx, END);
 				snprintf(dir, sizeof(dir), "%s     ", pfx);
 			} else {
-				printf("%s|-- ", pfx);
-				snprintf(dir, sizeof(dir), "%s|    ", pfx);
+				printf("%s%s ", pfx, FORK);
+				snprintf(dir, sizeof(dir), "%s%s    ", pfx, PIPE);
 			}
 
 			snprintf(buf, sizeof(buf), "%s/%s", path, namelist[i]->d_name);
@@ -114,8 +122,46 @@ static int descend(char *path, int show_perms, char *pfx)
 
 int tree(char *path, int show_perms)
 {
-	printf("[%s]\n", path);
+	printf("%s\n", path);
 	return descend(path, show_perms, "");
+}
+
+static int usage(int rc)
+{
+	fprintf(stderr, "usage: tree [-v] [-s] PATH\n");
+	return rc;
+}
+
+int main(int argc, char *argv[])
+{
+	int c;
+
+	if (argc < 2)
+		return usage(1);
+
+	while ((c = getopt(argc, argv, "h?sv")) != EOF) {
+		switch(c) {
+		case 's':
+			silent = 1;
+			break;
+
+		case 'v':
+			verbose = 1;
+			break;
+
+		case 'h':
+		case '?':
+			return usage(0);
+
+		default:
+			return usage(1);
+		}
+	}
+
+	if (optind >= argc)
+		return usage(1);
+
+	return tree(argv[optind], verbose);
 }
 
 /**
