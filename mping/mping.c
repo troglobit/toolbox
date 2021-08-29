@@ -263,7 +263,7 @@ int main (int argc, char **argv)
 
          case 'i':
             /* use interface instead of default from hostname */
-            strncpy (ifname, optarg, strlen (ifname));
+            strncpy (ifname, optarg, sizeof (ifname));
             iface = ifname;
             break;
 
