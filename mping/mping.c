@@ -72,6 +72,12 @@ void init_socket (void)
       exit (1);
    }
 
+   if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &arg_ttl, sizeof(arg_ttl)) < 0)
+   {
+      perror("Failed setting IP_MULTICAST_TTL");
+      exit (1);
+   }
+
    /* construct a multicast address structure */
    memset (&mc_addr, 0, sizeof (mc_addr));
    mc_addr.sin_family = AF_INET;
