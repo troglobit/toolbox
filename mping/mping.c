@@ -56,6 +56,7 @@ int verbose = 0;
 
 void init_socket (void)
 {
+   int flag_off = 0;
    int flag_on = 1;
 
    /* create a UDP socket */
@@ -75,6 +76,12 @@ void init_socket (void)
    if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &arg_ttl, sizeof(arg_ttl)) < 0)
    {
       perror("Failed setting IP_MULTICAST_TTL");
+      exit (1);
+   }
+
+   if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &flag_off, sizeof(flag_off)) < 0)
+   {
+      perror("Failed disabling IP_MULTICAST_LOOP");
       exit (1);
    }
 
