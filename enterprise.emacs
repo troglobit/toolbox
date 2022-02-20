@@ -14,7 +14,7 @@
 ;; Save it as ~/.emacs (dot emacs in your home directory) to activate
 ;; and then (re)start your Emacs to start populating ~/.emacs.d/ ...
 ;;
-;; Copyright (c) 2009-2020  Joachim Nilsson <troglobit@gmail.com>
+;; Copyright (c) 2009-2022  Joachim Wiberg <troglobit@gmail.com>
 ;;
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -32,8 +32,26 @@
 ;;\n\n")
 
 ;; Who am I?
-(setq user-full-name "Joachim Nilsson")
+(setq user-full-name "Joachim Wiberg")
 (setq user-mail-address "troglobit@gmail.com")
+
+;; Email setup
+(setq message-directory "~/.mail"
+      mail-host-address "gmail.com"
+      user-full-name "Joachim Wiberg"
+      message-citation-line-format "On %a, %b %d, %Y at %R, %f wrote:"
+      message-citation-line-function 'message-insert-formatted-citation-line
+      )
+
+;; Currently gmail as SMTP server
+(setq message-send-mail-function 'smtpmail-send-it
+      smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
+      smtpmail-auth-credentials '(("smtp.gmail.com" 587 "troglobit@gmail.com" nil))
+      smtpmail-default-smtp-server "smtp.gmail.com"
+      smtpmail-smtp-server "smtp.gmail.com"
+      smtpmail-smtp-service 587
+      starttls-use-gnutls t
+      )
 
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
@@ -252,9 +270,9 @@
     (add-to-list 'company-backends 'company-c-headers)))
 
 ;; Powerline is a neat modeline replacement
-(use-package powerline
-  :ensure t
-  :init (powerline-default-theme))
+;; (use-package powerline
+;;   :ensure t
+;;   :init (powerline-default-theme))
 
 ;; It's useful to be able to restart emacs from inside emacs.
 (use-package restart-emacs)
@@ -266,26 +284,26 @@
   :bind-keymap (("C-c p" . projectile-command-map))
   :config (projectile-global-mode t))
 
-(use-package ibuffer-projectile)
-(use-package ibuffer
-  ;; A different buffer view.
-  :bind ("C-x C-b" . ibuffer)
-  :init
-  (progn
-    (require 'ibuf-ext)
+;; (use-package ibuffer-projectile)
+;; (use-package ibuffer
+;;   ;; A different buffer view.
+;;   :bind ("C-x C-b" . ibuffer)
+;;   :init
+;;   (progn
+;;     (require 'ibuf-ext)
 
-    (setq ibuffer-filter-group-name-face 'success) ; TODO: declare it's own face.
-    (setq ibuffer-show-empty-filter-groups nil)
-    (add-to-list 'ibuffer-never-show-predicates "^\\*")
+;;     (setq ibuffer-filter-group-name-face 'success) ; TODO: declare it's own face.
+;;     (setq ibuffer-show-empty-filter-groups nil)
+;;     (add-to-list 'ibuffer-never-show-predicates "^\\*")
 
-    (add-hook 'ibuffer-mode-hooks 'ibuffer-auto-mode)
+;;     (add-hook 'ibuffer-mode-hooks 'ibuffer-auto-mode)
 
-    (setq ibuffer-formats
-          '((mark modified read-only " "
-		  (name 18 18 :left :elide) " "
-		  (size 9 -1 :right) " "
-		  (mode 16 16 :left :elide) " " filename-and-process)
-            (mark " " (name 16 -1) " " filename)))))
+;;     (setq ibuffer-formats
+;;           '((mark modified read-only " "
+;; 		  (name 18 18 :left :elide) " "
+;; 		  (size 9 -1 :right) " "
+;; 		  (mode 16 16 :left :elide) " " filename-and-process)
+;;             (mark " " (name 16 -1) " " filename)))))
 
 ;; Use projectile to sort ibuffer
 (add-hook 'ibuffer-hook
@@ -501,9 +519,9 @@
 (defun insert-file-header () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2020  Westermo Network Technologies AB\n")
+  (insert " * Copyright (C) 2022  Westermo Network Technologies AB\n")
   (insert " *\n")
-  (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
+  (insert " * Author: Joachim Wiberg <joachim.wiberg@westermo.com>\n")
   (insert " *\n")
   (insert " * Description:\n")
   (insert " *\n")
@@ -512,9 +530,9 @@
 (defun insert-include-body () (interactive)
   (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2020  Westermo Network Technologies\n")
+  (insert " * Copyright (C) 2022  Westermo Network Technologies\n")
   (insert " *\n")
-  (insert " * Author: Joachim Nilsson <joachim.nilsson@westermo.se>\n")
+  (insert " * Author: Joachim Wiberg <joachim.wiberg@westermo.com>\n")
   (insert " *\n")
   (insert " * Description:\n")
   (insert " *\n")
@@ -549,7 +567,7 @@
 (defun insert-isc-license () (interactive)
   (insert "/*\n")
   (insert " *\n")
-  (insert " * Copyright (c) 2020  Joachim Nilsson <troglobit@gmail.com>\n")
+  (insert " * Copyright (c) 2022  Joachim Wiberg <troglobit@gmail.com>\n")
   (insert " *\n")
   (insert " * Permission to use, copy, modify, and/or distribute this software for any\n")
   (insert " * purpose with or without fee is hereby granted, provided that the above\n")
@@ -565,10 +583,10 @@
   (insert " */\n"))
 
 (defun insert-wmo-signed-off () (interactive)
-  (insert "Signed-off-by: Joachim Nilsson <joachim.nilsson@westermo.se>\n"))
+  (insert "Signed-off-by: Joachim Wiberg <joachim.wiberg@westermo.com>\n"))
 
 (defun insert-signed-off () (interactive)
-  (insert "Signed-off-by: Joachim Nilsson <troglobit@gmail.com>\n"))
+  (insert "Signed-off-by: Joachim Wiberg <troglobit@gmail.com>\n"))
 
 ;; insert functions
 (global-unset-key "\C-t")
@@ -626,7 +644,7 @@
  '(custom-enabled-themes (quote (gruvbox-dark-medium)))
  '(custom-safe-themes
    (quote
-    ("84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default)))
+    ("2b9dc43b786e36f68a9fd4b36dd050509a0e32fe3b0a803310661edb7402b8b6" "84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default)))
  '(delete-active-region t)
  '(delete-selection-mode t)
  '(desktop-restore-in-current-display t)
@@ -639,7 +657,7 @@
  '(global-auto-revert-mode t)
  '(global-company-mode nil)
  '(global-magit-file-mode t)
- '(global-prettify-symbols-mode t)
+ '(global-prettify-symbols-mode nil)
  '(graphviz-dot-preview-extension "svg")
  '(highlight-indent-guides-auto-enabled nil)
  '(highlight-symbol-colors
@@ -654,6 +672,17 @@
  '(ispell-dictionary "american")
  '(menu-bar-mode nil)
  '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
+ '(notmuch-saved-searches
+   (quote
+    ((:name "inbox" :query "tag:inbox" :key "i")
+     (:name "unread" :query "tag:unread" :key "u")
+     (:name "flagged" :query "tag:flagged" :key "f")
+     (:name "sent" :query "tag:sent" :key "t")
+     (:name "drafts" :query "tag:draft" :key "d")
+     (:name "all mail" :query "*" :key "a")
+     (:name "important" :query "tag:important")
+     (:name "me" :query "me and unread"))))
+ '(notmuch-show-logo nil)
  '(nrepl-message-colors
    (quote
     ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
@@ -663,7 +692,7 @@
  '(org-support-shift-select t)
  '(package-selected-packages
    (quote
-    (gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
+    (notmuch wanderlust gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
@@ -713,6 +742,7 @@
      (340 . "#94BFF3")
      (360 . "#DC8CC3"))))
  '(vc-annotate-very-old-color "#DC8CC3")
+ '(vc-display-status nil)
  '(which-function-mode t))
 
 ;; Envy Code R is usally a great font, other great fonts are
@@ -722,5 +752,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Envy Code R" :foundry "ENVY" :slant normal :weight normal :height 98 :width normal))))
+ '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight normal :height 98 :width normal))))
  '(tab-bar-tab ((t (:inherit tab-bar :box (:line-width 1 :style released-button))))))
