@@ -1,0 +1,43 @@
+config * {
+}
+
+access * {
+	trusted 127.0.0.1;
+#	trusted 192.168.0.0/16;
+#	allowed 192.168.0.0/16;
+}
+
+default full {
+	rw *;
+}
+
+# The '&' in logfile name is substituted with the console name.
+default * {
+	logfile /var/log/conserver/&.log;
+	timestamp "";
+	include full;
+	options reinitoncc;
+}
+
+default ser {
+	type device;
+	device /dev/X;
+	devicesubst X=cs;
+	baud 115200;
+	parity none;
+	options !ixon,!ixoff;
+	master localhost;
+}
+
+console ttyS0   { include ser; }
+console ttyUSB0 { include ser; }
+console ttyUSB1 { include ser; }
+console ttyUSB2 { include ser; }
+console ttyUSB3 { include ser; }
+console ttyUSB4 { include ser; }
+console ttyUSB5 { include ser; }
+console ttyUSB6 { include ser; }
+console ttyACM0 { include ser; }
+console ttyACM1 { include ser; }
+console ttyACM2 { include ser; }
+console ttyACM3 { include ser; }
