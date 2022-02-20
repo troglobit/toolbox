@@ -1,0 +1,63 @@
+#!/bin/sh
+# Set up a network namespace with a given name and interface and start a
+# bash shell.  The netns sets up 192.168.2.42/24 for the interface and
+# 192.168.2.1 for the gateway.  Change below as needed.
+#
+# Example:
+#          usenet lab eth1
+# or
+#          usenet eth1
+#
+# The latter will use the interface name as the netns name.
+#
+# NOTE: Run with sudo if you don't have the correct capabilities
+
+if [ $# -lt 1 ]; then
+	echo "Usage: $0 NETNS IFNAME [VID]"
+	exit 1
+fi
+
+ns=$1
+ifname=$2
+ifcont=eth0
+vid=$3
+
+if [ "x" = "x$ifname" ]; then
+    ifname=$ns
+    echo "No interface given, using $ifname"
+fi
+
+# Create netns and move interface there
+ip netns add $ns
+ip link set $ifname netns $ns
+
+# Bring up basic networking inside the netns
+ip netns exec $ns ip addr add 127.0.0.1/8 dev lo
+ip netns exec $ns ip link set lo up
+
+ip netns exec $ns ip addr flush $ifname
+
+ip netns exec $ns ip link set $ifname down
+ip netns exec $ns ip link set $ifname name $ifcont
+
+if [ -n "$vid" ]; then
+    ip netns exec $ns ip link add link $ifcont name $ifcont.$vid type vlan id $vid
+    ifcont=$ifcont.$vid
+fi
+
+ip netns exec $ns ip link set $ifcont up
+ip netns exec $ns ip addr add 192.168.2.42/24 dev $ifcont
+
+ip netns exec $ns ip rout add 192.168.2.0/24 dev $ifcont
+ip netns exec $ns ip rout add default via 192.168.2.1
+
+# Now start bash in the netns
+ip netns exec $ns bash
+
+# Restore name
+ip netns exec $ns ip link set $ifcont down
+ip netns exec $ns ip link set $ifcont name $ifname
+ip netns exec $ns ip link set $ifname up
+
+# Clean up netns and restore interface to host
+ip netns del $ns
