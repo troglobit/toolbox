@@ -1,9 +1,21 @@
 #!/bin/sh
+# Verifies the bridge_binding property of VLAN interfaces on top of a
+# Linux bridge with vlan_filtering enabled.
+
+check_iface()
+{
+	sleep 1
+	state=$(ip -br link show dev $1 | awk '{print $2;}')
+	if [ "$state" != "$2" ]; then
+		echo "FAIL - $3"
+		exit 1
+	fi
+}
 
 ip link add p1 type veth peer h1
 ip link add p2 type veth peer h2
 
-ip link add br0 type bridge vlan_filtering 1
+ip link add br0 type bridge vlan_filtering 1 stp_state 0
 ip link set p1 master br0
 ip link set p2 master br0
 
@@ -26,3 +38,7 @@ done
 ip link set vlan1 type vlan bridge_binding on
 ip link set vlan2 type vlan bridge_binding on
 
+check_iface vlan1 UP "Not even initial bringup works."
+
+ip link set h1 down
+check_iface vlan1 DOWN "Bridge VLAN binding does not work."
