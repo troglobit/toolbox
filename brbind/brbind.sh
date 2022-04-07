@@ -1,7 +1,7 @@
 #!/bin/sh
 
-ip link add p1 type dummy
-ip link add p2 type dummy
+ip link add p1 type veth peer h1
+ip link add p2 type veth peer h2
 
 ip link add br0 type bridge vlan_filtering 1
 ip link set p1 master br0
@@ -19,7 +19,7 @@ bridge vlan add dev br0 vid 2 self
 ip link add link br0 name vlan1 type vlan id 1
 ip link add link br0 name vlan2 type vlan id 2
 
-for iface in p1 p2 br0 vlan1 vlan2; do
+for iface in p1 h1 p2 h2 br0 vlan1 vlan2; do
 	ip link set $iface up
 done
 
