@@ -42,3 +42,6 @@ check_iface vlan1 UP "Not even initial bringup works."
 
 ip link set h1 down
 check_iface vlan1 DOWN "Bridge VLAN binding does not work."
+
+echo "PASS"
+exit 0
