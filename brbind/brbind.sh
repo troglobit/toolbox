@@ -1,12 +1,20 @@
 #!/bin/sh
 # Verifies the bridge_binding property of VLAN interfaces on top of a
 # Linux bridge with vlan_filtering enabled.
+#
+# Bridge binding ensures link status of VLAN interfaces on top of of
+# bridge track only the bridge ports in the same VLAN.
+#
+# Test in an unshare like this:
+#
+#        unshare -mrun
+#        ./brbind.sh
 
 cleanup()
 {
-	ip link del br0
-	ip link del h1
-	ip link del h2
+	for iface in br0 h1 h2; do
+		ip link del $iface 2>/dev/null
+	done
 }
 
 check_iface()
