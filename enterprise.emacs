@@ -196,9 +196,16 @@
   :mode (("README\\.md$'" . gfm-mode)
          ("\\.md$'" . markdown-mode)
          ("\\.markdown$'" . markdown-mode))
-  :init (setq markdown-command "pandoc"))
+  :config (setq markdown-command (concat "pandoc -t html5 --standalone --template "
+					 (expand-file-name "~/.emacs.d/template.html"))))
 
 (use-package markdown-toc
+  :ensure t)
+
+(use-package pandoc-mode
+  :ensure t)
+
+(use-package gh-md
   :ensure t)
 
 (use-package dpkg-dev-el
