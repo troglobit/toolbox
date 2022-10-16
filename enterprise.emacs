@@ -44,14 +44,14 @@
       )
 
 ;; Currently gmail as SMTP server
+(setq mail-user-agent 'message-user-agent)
 (setq message-send-mail-function 'smtpmail-send-it
       smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
       smtpmail-auth-credentials '(("smtp.gmail.com" 587 "troglobit@gmail.com" nil))
       smtpmail-default-smtp-server "smtp.gmail.com"
       smtpmail-smtp-server "smtp.gmail.com"
       smtpmail-smtp-service 587
-      starttls-use-gnutls t
-      )
+      starttls-use-gnutls t)
 
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
@@ -60,6 +60,10 @@
 ;; Prevent accidental exit of Emacs
 (fset 'yes-or-no-p 'y-or-n-p)
 (setq confirm-kill-emacs (quote y-or-n-p))
+
+;; Cleanup mode by default
+(add-hook 'before-save-hook
+          'delete-trailing-whitespace)
 
 ;; Setup MacBook cmd key as Meta
 (setq mac-option-modifier 'super)
@@ -157,6 +161,15 @@
   :ensure t
   :init  (load-theme 'gruvbox-dark-medium t))
 
+;; Emacs Code Browser -- http://ecb.sourceforge.net/
+;; (use-package ecb
+;;   :ensure t
+;;   :init
+;;   (setq ecb-examples-bufferinfo-buffer-name nil)
+;;   (setq ecb-tip-of-the-day nil)
+;;   (progn
+;;     (require 'ecb)))
+
 ;;
 (use-package ido-completing-read+
   :ensure t)
@@ -246,10 +259,16 @@
                 (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
                   (ggtags-mode 1)))))
 
+;; Center text on screen, helps with ggtags lookup but feels a bit weird.
+;; https://emacs.stackexchange.com/questions/36094/using-ggtags-tag-lookup-along-with-centered-cursor-mode
+;; (setq scroll-preserve-screen-position t
+;;       scroll-conservatively 0
+;;       maximum-scroll-margin 0.5
+;;       scroll-margin 99999)
+
 ;; Complete anything (company)
 (use-package company
   :ensure t
-  :defer t
   :init (global-company-mode)
   :config
   (progn
@@ -258,20 +277,18 @@
 
     (setq company-tooltip-align-annotations t
           ;; Easy navigation to candidates with M-<n>
-          company-show-numbers t
+          company-show-quick-access t
 	  company-abort-manual-when-too-short t
-	  company-auto-complete 'company-explicit-action-p)
+	  company-insertion-on-trigger 'company-explicit-action-p)
     (setq company-dabbrev-downcase nil))
   :diminish company-mode)
 
 (use-package company-quickhelp          ; Documentation popups for Company
   :ensure t
-  :defer t
   :init (add-hook 'global-company-mode-hook #'company-quickhelp-mode))
 
 (use-package company-c-headers
   :ensure t
-  :defer t
   :init
   (with-eval-after-load 'company
     (add-to-list 'company-backends 'company-c-headers)))
@@ -289,28 +306,28 @@
   :ensure t
   :init
   :bind-keymap (("C-c p" . projectile-command-map))
-  :config (projectile-global-mode t))
+  :config (projectile-mode t))
 
-;; (use-package ibuffer-projectile)
-;; (use-package ibuffer
-;;   ;; A different buffer view.
-;;   :bind ("C-x C-b" . ibuffer)
-;;   :init
-;;   (progn
-;;     (require 'ibuf-ext)
+(use-package ibuffer-projectile)
+(use-package ibuffer
+  ;; A different buffer view.
+  :bind ("C-x C-b" . ibuffer)
+  :init
+  (progn
+    (require 'ibuf-ext)
 
-;;     (setq ibuffer-filter-group-name-face 'success) ; TODO: declare it's own face.
-;;     (setq ibuffer-show-empty-filter-groups nil)
-;;     (add-to-list 'ibuffer-never-show-predicates "^\\*")
+    (setq ibuffer-filter-group-name-face 'success) ; TODO: declare it's own face.
+    (setq ibuffer-show-empty-filter-groups nil)
+    (add-to-list 'ibuffer-never-show-predicates "^\\*")
 
-;;     (add-hook 'ibuffer-mode-hooks 'ibuffer-auto-mode)
+    (add-hook 'ibuffer-mode-hooks 'ibuffer-auto-mode)
 
-;;     (setq ibuffer-formats
-;;           '((mark modified read-only " "
-;; 		  (name 18 18 :left :elide) " "
-;; 		  (size 9 -1 :right) " "
-;; 		  (mode 16 16 :left :elide) " " filename-and-process)
-;;             (mark " " (name 16 -1) " " filename)))))
+    (setq ibuffer-formats
+          '((mark modified read-only " "
+		  (name 18 18 :left :elide) " "
+		  (size 9 -1 :right) " "
+		  (mode 16 16 :left :elide) " " filename-and-process)
+            (mark " " (name 16 -1) " " filename)))))
 
 ;; Use projectile to sort ibuffer
 (add-hook 'ibuffer-hook
@@ -335,6 +352,17 @@
 		   magit-diff-use-overlays nil))
 
 (use-package magit-popup)
+(use-package diminish
+  :init (require 'diminish)
+  :config
+  (diminish 'projectile-mode)
+  (diminish 'flycheck-mode)
+  (diminish 'eldoc-mode)
+  (diminish 'abbrev-mode))
+
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
 
 ;; This package will display all available keybindings in a popup.
 ;; https://github.com/justbur/emacs-which-key
@@ -524,22 +552,22 @@
 ;; (global-set-key '[C-prior] 'tab-previous)
 
 (defun insert-file-header () (interactive)
-  (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
+  (insert "/* <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2022  Westermo Network Technologies AB\n")
+  (insert " * Copyright (C) 2022  Addiva Elektronik AB\n")
   (insert " *\n")
-  (insert " * Author: Joachim Wiberg <joachim.wiberg@westermo.com>\n")
+  (insert " * Author: Joachim Wiberg <joachim.wiberg@addiva.se>\n")
   (insert " *\n")
   (insert " * Description:\n")
   (insert " *\n")
   (insert " */\n"))
 
 (defun insert-include-body () (interactive)
-  (insert "/* \\\\/ Westermo - <FILE DESCRIPTION>\n")
+  (insert "/* <FILE DESCRIPTION>\n")
   (insert " *\n")
-  (insert " * Copyright (C) 2022  Westermo Network Technologies\n")
+  (insert " * Copyright (C) 2022  Addiva Elektronik AB\n")
   (insert " *\n")
-  (insert " * Author: Joachim Wiberg <joachim.wiberg@westermo.com>\n")
+  (insert " * Author: Joachim Wiberg <joachim.wiberg@addiva.se>\n")
   (insert " *\n")
   (insert " * Description:\n")
   (insert " *\n")
@@ -590,7 +618,7 @@
   (insert " */\n"))
 
 (defun insert-wmo-signed-off () (interactive)
-  (insert "Signed-off-by: Joachim Wiberg <joachim.wiberg@westermo.com>\n"))
+  (insert "Signed-off-by: Joachim Wiberg <joachim.wiberg@addiva.se>\n"))
 
 (defun insert-signed-off () (interactive)
   (insert "Signed-off-by: Joachim Wiberg <troglobit@gmail.com>\n"))
@@ -635,86 +663,77 @@
  '(beacon-color "#ec4780")
  '(before-save-hook nil)
  '(c-default-style
-   (quote
-    ((c-mode . "linux")
+   '((c-mode . "linux")
      (c++-mode . "linux")
      (java-mode . "java")
      (awk-mode . "awk")
-     (other . "gnu"))))
+     (other . "gnu")))
  '(column-number-mode t)
  '(company-abort-manual-when-too-short t)
- '(company-auto-complete (quote (quote company-explicit-action-p)))
- '(compilation-message-face (quote default))
+ '(company-insertion-on-trigger ''company-explicit-action-p)
+ '(compilation-message-face 'default)
  '(completion-ignored-extensions
-   (quote
-    (".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d")))
- '(custom-enabled-themes (quote (gruvbox-dark-medium)))
+   '(".o" "~" ".bin" ".lbin" ".so" ".a" ".ln" ".blg" ".bbl" ".elc" ".lof" ".glo" ".idx" ".lot" ".svn/" ".hg/" ".git/" ".bzr/" "CVS/" "_darcs/" "_MTN/" ".fmt" ".tfm" ".class" ".fas" ".lib" ".mem" ".x86f" ".sparcf" ".dfsl" ".pfsl" ".d64fsl" ".p64fsl" ".lx64fsl" ".lx32fsl" ".dx64fsl" ".dx32fsl" ".fx64fsl" ".fx32fsl" ".sx64fsl" ".sx32fsl" ".wx64fsl" ".wx32fsl" ".fasl" ".ufsl" ".fsl" ".dxl" ".lo" ".la" ".gmo" ".mo" ".toc" ".aux" ".cp" ".fn" ".ky" ".pg" ".tp" ".vr" ".cps" ".fns" ".kys" ".pgs" ".tps" ".vrs" ".pyc" ".pyo" ".d"))
+ '(custom-enabled-themes '(wombat))
  '(custom-safe-themes
-   (quote
-    ("2b9dc43b786e36f68a9fd4b36dd050509a0e32fe3b0a803310661edb7402b8b6" "84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default)))
+   '("78c4238956c3000f977300c8a079a3a8a8d4d9fee2e68bad91123b58a4aa8588" "6bdcff29f32f85a2d99f48377d6bfa362768e86189656f63adbf715ac5c1340b" "4eb6fa2ee436e943b168a0cd8eab11afc0752aebb5d974bba2b2ddc8910fca8f" "83e0376b5df8d6a3fbdfffb9fb0e8cf41a11799d9471293a810deb7586c131e6" "6b5c518d1c250a8ce17463b7e435e9e20faa84f3f7defba8b579d4f5925f60c1" "2b9dc43b786e36f68a9fd4b36dd050509a0e32fe3b0a803310661edb7402b8b6" "84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" "a22f40b63f9bc0a69ebc8ba4fbc6b452a4e3f84b80590ba0a92b4ff599e53ad0" "585942bb24cab2d4b2f74977ac3ba6ddbd888e3776b9d2f993c5704aa8bb4739" "8f97d5ec8a774485296e366fdde6ff5589cf9e319a584b845b6f7fa788c9fa9a" "669e02142a56f63861288cc585bee81643ded48a19e36bfdf02b66d745bcc626" default))
  '(delete-active-region t)
  '(delete-selection-mode t)
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diff-switches "-u")
- '(ediff-window-setup-function (quote ediff-setup-windows-plain))
+ '(ediff-window-setup-function 'ediff-setup-windows-plain)
  '(fci-rule-color "#383838")
  '(fill-column 72)
  '(font-use-system-font nil)
  '(global-auto-revert-mode t)
  '(global-company-mode nil)
- '(global-magit-file-mode t)
  '(global-prettify-symbols-mode nil)
  '(graphviz-dot-preview-extension "svg")
  '(highlight-indent-guides-auto-enabled nil)
  '(highlight-symbol-colors
-   (quote
-    ("#FFEE58" "#C5E1A5" "#80DEEA" "#64B5F6" "#E1BEE7" "#FFCC80")))
+   '("#FFEE58" "#C5E1A5" "#80DEEA" "#64B5F6" "#E1BEE7" "#FFCC80"))
  '(highlight-symbol-foreground-color "#E0E0E0")
- '(highlight-tail-colors (quote (("#ec4780" . 0) ("#424242" . 100))))
- '(ido-mode (quote both) nil (ido))
- '(indicate-buffer-boundaries (quote ((top . left) (bottom . right))))
+ '(highlight-tail-colors '(("#ec4780" . 0) ("#424242" . 100)))
+ '(ido-mode 'both nil (ido))
+ '(indicate-buffer-boundaries '((top . left) (bottom . right)))
  '(indicate-empty-lines t)
  '(inhibit-startup-screen t)
  '(ispell-dictionary "american")
  '(menu-bar-mode nil)
- '(mouse-wheel-scroll-amount (quote (1 ((shift) . 1) ((control)))))
+ '(magit-define-global-key-bindings t)
+ '(mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control))))
  '(notmuch-saved-searches
-   (quote
-    ((:name "inbox" :query "tag:inbox" :key "i")
+   '((:name "inbox" :query "tag:inbox" :key "i")
      (:name "unread" :query "tag:unread" :key "u")
      (:name "flagged" :query "tag:flagged" :key "f")
      (:name "sent" :query "tag:sent" :key "t")
      (:name "drafts" :query "tag:draft" :key "d")
      (:name "all mail" :query "*" :key "a")
      (:name "important" :query "tag:important")
-     (:name "me" :query "me and unread"))))
+     (:name "me" :query "me and unread")))
  '(notmuch-show-logo nil)
  '(nrepl-message-colors
-   (quote
-    ("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3")))
+   '("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3"))
  '(org-fontify-done-headline t)
  '(org-fontify-quote-and-verse-blocks t)
  '(org-fontify-whole-heading-line t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   (quote
-    (notmuch wanderlust gruvbox-theme ido-completing-read+ ggtags centered-cursor-mode zenburn-theme spotify rtags popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-gtags helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag)))
- '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
+   '(doom-modeline notmuch wanderlust gruvbox-theme ido-completing-read+ centered-cursor-mode zenburn-theme spotify popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag))
+ '(pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
+ '(projectile-dynamic-mode-line nil)
  '(projectile-mode t nil (projectile))
  '(save-place-mode 1)
+ '(scalable-fonts-allowed t)
  '(scroll-bar-mode nil)
- '(scroll-conservatively 10000)
- '(scroll-margin 0)
- '(scroll-preserve-screen-position t)
  '(server-kill-new-buffers t)
  '(server-mode t)
  '(show-paren-mode t)
  '(split-height-threshold 200)
  '(split-width-threshold 140)
- '(tab-bar-mode t)
  '(tetris-x-colors
    [[229 192 123]
     [97 175 239]
@@ -723,14 +742,14 @@
     [152 195 121]
     [198 120 221]
     [86 182 194]])
+ '(text-scale-mode-step 1.4)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
- '(tramp-syntax (quote default) nil (tramp))
- '(uniquify-buffer-name-style (quote forward) nil (uniquify))
+ '(tramp-syntax 'default nil (tramp))
+ '(uniquify-buffer-name-style 'forward nil (uniquify))
  '(vc-annotate-background "#2B2B2B")
  '(vc-annotate-color-map
-   (quote
-    ((20 . "#BC8383")
+   '((20 . "#BC8383")
      (40 . "#CC9393")
      (60 . "#DFAF8F")
      (80 . "#D0BF8F")
@@ -747,10 +766,11 @@
      (300 . "#7CB8BB")
      (320 . "#8CD0D3")
      (340 . "#94BFF3")
-     (360 . "#DC8CC3"))))
+     (360 . "#DC8CC3")))
  '(vc-annotate-very-old-color "#DC8CC3")
  '(vc-display-status nil)
- '(which-function-mode t))
+ '(which-function-mode t)
+ '(x-stretch-cursor t))
 
 ;; Envy Code R is usally a great font, other great fonts are
 ;; Source Code Pro and Inconsolata
@@ -759,5 +779,5 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight normal :height 98 :width normal))))
+ '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight normal :height 113 :width normal))))
  '(tab-bar-tab ((t (:inherit tab-bar :box (:line-width 1 :style released-button))))))
