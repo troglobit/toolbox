@@ -752,6 +752,7 @@
  '(scroll-bar-mode nil)
  '(server-kill-new-buffers t)
  '(server-mode t)
+ '(sh-basic-offset 8)
  '(show-paren-mode t)
  '(split-height-threshold 200)
  '(split-width-threshold 140)
