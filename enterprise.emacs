@@ -702,6 +702,8 @@
  '(desktop-restore-in-current-display t)
  '(desktop-save-mode t)
  '(diff-switches "-u")
+ '(ediff-merge-split-window-function 'split-window-horizontally)
+ '(ediff-split-window-function 'split-window-horizontally)
  '(ediff-window-setup-function 'ediff-setup-windows-plain)
  '(fci-rule-color "#383838")
  '(fill-column 72)
