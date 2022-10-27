@@ -491,7 +491,7 @@
 ;;   F11   ▣ Fullscreen
 ;;   F12   Toggle Menu bar
 ;; C-F12   Toggle Tool bar
-;; S-F12   Toggle GDB windows
+;; S-F12   Toggle Tab bar
 ;; M-F12   Toggle Scroll bars
 ;;
 ;; M-#      Calculator
@@ -543,24 +543,34 @@
 (global-set-key [C-prior] 'beginning-of-buffer)
 (global-set-key [C-next]  'end-of-buffer)
 
-
 (when window-system
   (global-set-key [f11]   'fullscreen)
   (global-unset-key [f12])
   (global-set-key [f12]   'menu-bar-mode)
   (global-set-key [C-f12] 'tool-bar-mode)
-  (global-set-key [M-f12] 'scroll-bar-mode))
-(global-set-key [S-f12] 'gdb-many-windows)
+  (global-set-key [M-f12] 'scroll-bar-mode)
+  (global-set-key [S-f12] 'tab-bar-mode))
 
 (global-set-key (kbd "M-#") 'calculator)
-(global-set-key '[C-tab] 'other-window)
-(global-set-key '[C-iso-lefttab] 'other-window-backwards)
+
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 
+;; Drop tab-bar-mode default bindings
+(global-unset-key '[C-S-iso-lefttab])
+(global-unset-key '[C-tab])
+(global-set-key '[C-tab] 'other-window)
+(global-set-key '[C-iso-lefttab] 'other-window-backwards)
+
+;; Moving around windows in a frame now that we have tabs
+(global-set-key '[M-left] 'windmove-left)
+(global-set-key '[M-right] 'windmove-right)
+(global-set-key '[M-up] 'windmove-up)
+(global-set-key '[M-down] 'windmove-down)
+
 ;; For Emacs 27.1 tab-bar-mode
-;; (global-set-key '[C-next] 'tab-next)
-;; (global-set-key '[C-prior] 'tab-previous)
+(global-set-key '[C-next] 'tab-next)
+(global-set-key '[C-prior] 'tab-previous)
 
 (defun insert-file-header () (interactive)
   (insert "/* <FILE DESCRIPTION>\n")
