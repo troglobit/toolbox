@@ -367,6 +367,11 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
+;; Nyan Cat buffer position :-)
+(use-package nyan-mode
+  :ensure t
+  :init (nyan-mode t))
+
 ;; This package will display all available keybindings in a popup.
 ;; https://github.com/justbur/emacs-which-key
 ;; (use-package which-key
@@ -416,9 +421,6 @@
 
 ;; Show colors in Emacs when color codes are listed
 ;;(rainbow-mode t)
-
-;; Nyan Cat buffer position :-)
-;; (nyan-mode t)
 
 ;; ANSI colors in Emacs compilation buffer
 ;; http://stackoverflow.com/questions/3072648/cucumbers-ansi-colors-messing-up-emacs-compilation-buffer
@@ -722,7 +724,7 @@
  '(org-fontify-whole-heading-line t)
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(doom-modeline notmuch wanderlust gruvbox-theme ido-completing-read+ centered-cursor-mode zenburn-theme spotify popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag))
+   '(nyan-mode doom-modeline notmuch wanderlust gruvbox-theme ido-completing-read+ centered-cursor-mode zenburn-theme spotify popup-switcher markdown-mode magit lua-mode langtool ibuffer-projectile helm-git go-mode git-gutter-fringe gist flycheck flx-ido flim f dockerfile-mode discover debian-changelog-mode dash-functional company-c-headers ag))
  '(pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
  '(pos-tip-background-color "#3a3a3a")
  '(pos-tip-foreground-color "#9E9E9E")
