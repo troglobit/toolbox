@@ -34,28 +34,6 @@
 (setq initial-scratch-message    ";; Welcome to Troglobit Enterprise ¯\\_(ツ)_/¯ Emacs!
 ;;\n\n")
 
-;; Who am I?
-(setq user-full-name "Joachim Wiberg")
-(setq user-mail-address "troglobit@gmail.com")
-
-;; Email setup
-(setq message-directory "~/.mail"
-      mail-host-address "gmail.com"
-      user-full-name "Joachim Wiberg"
-      message-citation-line-format "On %a, %b %d, %Y at %R, %f wrote:"
-      message-citation-line-function 'message-insert-formatted-citation-line
-      )
-
-;; Currently gmail as SMTP server
-(setq mail-user-agent 'message-user-agent)
-(setq message-send-mail-function 'smtpmail-send-it
-      smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
-      smtpmail-auth-credentials '(("smtp.gmail.com" 587 "troglobit@gmail.com" nil))
-      smtpmail-default-smtp-server "smtp.gmail.com"
-      smtpmail-smtp-server "smtp.gmail.com"
-      smtpmail-smtp-service 587
-      starttls-use-gnutls t)
-
 ;; Location for privately maintained packages.
 (add-to-list 'load-path "~/.emacs.d/site-lisp")
 (add-to-list 'load-path "~/.emacs.d/epresent")
@@ -71,6 +49,30 @@
 ;; Setup MacBook cmd key as Meta
 (setq mac-option-modifier 'super)
 (setq mac-command-modifier 'meta)
+
+(autoload 'notmuch "notmuch" "Notmuch mail" t)
+(require 'notmuch)
+
+;; Email setup
+(setq message-directory "~/.mail"
+      mail-host-address "gmail.com"
+      user-full-name "Joachim Wiberg"
+      user-mail-address "troglobit@gmail.com"
+      notmuch-fcc-dirs nil
+      read-mail-command (quote notmuch)
+      mail-user-agent 'message-user-agent
+      message-citation-line-format "On %a, %b %d, %Y at %R, %f wrote:"
+      message-citation-line-function 'message-insert-formatted-citation-line
+      )
+
+;; Currently gmail as SMTP server
+(setq message-send-mail-function 'smtpmail-send-it
+      smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
+      smtpmail-auth-credentials '(("smtp.gmail.com" 587 "troglobit@gmail.com" nil))
+      smtpmail-default-smtp-server "smtp.gmail.com"
+      smtpmail-smtp-server "smtp.gmail.com"
+      smtpmail-smtp-service 587
+      starttls-use-gnutls t)
 
 ;;; package setup
 (setq load-prefer-newer t
