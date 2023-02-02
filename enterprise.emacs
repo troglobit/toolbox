@@ -130,12 +130,17 @@
 ;; Always enable ggtags for C projects
 (add-hook 'c-mode-common-hook
           (lambda ()
-            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode 'python-mode)
               (ggtags-mode 1))))
 
 ;; When saving a file that starts with #!, make it executable.
+(defun my-make-file-executable-maybe ()
+  "Make hash-bang file executable unless it's a Python file."
+  (unless (file-name-extension buffer-file-name ".py")
+    (executable-make-buffer-file-executable-if-script-p)))
+
 (add-hook 'after-save-hook
-          'executable-make-buffer-file-executable-if-script-p)
+          'my-make-file-executable-maybe)
 
 ;; Fix dired listings ...
 (setq dired-listing-switches "-laGh1v --group-directories-first")
@@ -357,6 +362,16 @@
 		   magit-diff-use-overlays nil))
 
 (use-package magit-popup)
+
+(use-package magit-org-todos
+  :after magit
+  :config
+  (magit-org-todos-autoinsert)
+  (setq magit-org-todos-filename "TODO.org"))
+
+(use-package forge
+  :after magit)
+
 (use-package diminish
   :init (require 'diminish)
   :config
