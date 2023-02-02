@@ -303,6 +303,13 @@
   (with-eval-after-load 'company
     (add-to-list 'company-backends 'company-c-headers)))
 
+;; Honor .editorconfig files in projects, for details, see
+;; https://github.com/editorconfig/editorconfig-emacs
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
 ;; Powerline is a neat modeline replacement
 ;; (use-package powerline
 ;;   :ensure t
