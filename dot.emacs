@@ -942,6 +942,7 @@
  '(projectile-mode t nil (projectile))
  '(save-place-mode 1)
  '(scalable-fonts-allowed t)
+ '(scroll-bar-mode nil)
  '(server-kill-new-buffers t)
  '(server-mode t)
  '(server-raise-frame t)
