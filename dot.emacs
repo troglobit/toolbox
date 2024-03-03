@@ -296,6 +296,7 @@
 ;; Honor .editorconfig files in projects, for details, see
 ;; https://github.com/editorconfig/editorconfig-emacs
 (use-package editorconfig
+  :diminish editorconfig-mode
   :config
   (editorconfig-mode 1))
 
