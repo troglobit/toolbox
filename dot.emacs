@@ -360,10 +360,10 @@
 ;;   (magit-org-todos-autoinsert)
 ;;   (setq magit-org-todos-filename "TODO.org"))
 
-(use-package forge
-  :after magit)
-
-(use-package git-timemachine)
+;; PACKAGES BROKEN ON EMACS 30/31 as of 2024-03-03
+;; (use-package forge
+;;   :after magit)
+;; (use-package git-timemachine)
 
 (use-package diminish
   :init (require 'diminish)
