@@ -135,8 +135,7 @@
 
 ;; Email setup, for notmuch
 ;; From https://github.com/admiralakber/simplemacs/blob/master/modules/notmuch.org
-;; Rembmer: sudo apt install mailscripts
-;; to get notmuch-extract-patch
+;; Remember: sudo apt install mailscripts     # to get notmuch-extract-patch
 (use-package notmuch
   :init
   (setq message-directory "~/mail")
