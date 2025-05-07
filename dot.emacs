@@ -214,7 +214,11 @@
   :mode (("\\.yml$"  . yaml-mode)
 	 ("\\.yaml$" . yaml-mode)))
 
-(use-package yang-mode)
+(use-package yang-mode
+  :hook (yang-mode . (lambda ()
+                       (setq-local c-basic-offset 2)
+                       (setq-local indent-tabs-mode nil)
+                       (electric-indent-local-mode -1))))
 
 (use-package dts-mode
   :mode (("\\.dts$"  . dts-mode)
@@ -231,6 +235,10 @@
 					 (expand-file-name "~/.emacs.d/template.html"))))
 
 (use-package markdown-toc)
+
+(use-package adoc-mode
+  :ensure t)
+
 (use-package pandoc-mode)
 (use-package gh-md)
 (use-package dpkg-dev-el)
@@ -299,6 +307,89 @@
   :config
   (editorconfig-mode 1))
 
+;; (use-package go-mode
+;;   :ensure t
+;;   :mode "\\.go\\'"
+;;   :preface
+;;    (defun vd/go-lsp-start()
+;;     (define-key go-ts-mode-map
+;;             ["RET"] 'newline-and-indent)
+;;     (define-key go-ts-mode-map
+;;             ["M-RET"] 'newline)
+;;     (add-hook 'before-save-hook #'lsp-format-buffer t t)
+;;     (add-hook 'before-save-hook #'lsp-organize-imports t t)
+;;     (lsp-deferred)
+;;     )
+;;   :hook
+;;   (go-ts-mode . vd/go-lsp-start)
+;;   :custom
+;;   (go-ts-mode-indent-offset 4)
+;;   :config
+;;   (add-to-list 'exec-path "~/.local/bin")
+;;   (setq lsp-go-analyses '(
+;;                           (nilness . t)
+;;                           (shadow . t)
+;;                           (unusedwrite . t)
+;;                           (fieldalignment . t)
+;;                                        )
+;;         lsp-go-codelenses '(
+;;                           (test . t)
+;;                           (tidy . t)
+;;                           (upgrade_dependency . t)
+;;                           (vendor . t)
+;;                           (run_govulncheck . t)
+;;                                        )))
+
+;; (use-package go-tag
+;;   :ensure t)
+
+;; (use-package godoctor
+;;   :ensure t)
+
+
+(use-package general
+  :ensure t)
+
+(use-package go-ts-mode
+  :hook
+  (go-ts-mode . lsp-deferred)
+  ;; (go-ts-mode . go-format-on-save-mode)
+  :init
+  (add-to-list 'treesit-language-source-alist '(go "https://github.com/tree-sitter/tree-sitter-go"))
+  (add-to-list 'treesit-language-source-alist '(gomod "https://github.com/camdencheek/tree-sitter-go-mod"))
+  ;; (dolist (lang '(go gomod)) (treesit-install-language-grammar lang))
+  ;; (add-to-list 'auto-mode-alist '("\\.go\\'" . go-ts-mode))
+  ;; (add-to-list 'auto-mode-alist '("/go\\.mod\\'" . go-mod-ts-mode))
+  :config
+  ;; (reformatter-define go-format
+  ;;   :program "goimports"
+  ;;   :args '("/dev/stdin"))
+  :general
+    (mes/despot-def go-ts-mode-map
+      "=" `("format" . ,(make-sparse-keymap))
+      "=b" '("buf" . lsp-format-buffer)
+      "=i" '("imports" . lsp-organize-imports)
+      "=r" '("region" . lsp-format-region)
+      "a" `("code actions" . ,(make-sparse-keymap))
+      "aa" '("code action" . lsp-execute-code-action)
+      "al" '("lens" . lsp-avy-lens)
+      "b" `("backend" . ,(make-sparse-keymap))
+      "bd" '("describe" . lsp-describe-session)
+      "br" '("restart" . lsp-workspace-restart)
+      "bs" '("shutdown" . lsp-workspace-shutdown)
+      "g" `("goto" . ,(make-sparse-keymap))
+      "gb" '("pop" . pop-tag-mark)
+      "gd" '("goto def" . lsp-find-definition)
+      "gr" '("find refs" . lsp-find-references)
+      "gt" '("find type def" . lsp-find-type-definition)
+      "gi" '("find impls" . lsp-find-implementation)
+      "h" `("help" . ,(make-sparse-keymap))
+      "hd" '("describe" . lsp-describe-thing-at-point)
+      "r" `("refactor" . ,(make-sparse-keymap))
+      "rr" '("rename" . lsp-rename)))
+
+;;;;;;;;;;;;;;;;;;;;;;;; Project mgt ;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; It's useful to be able to restart emacs from inside emacs.
 (use-package restart-emacs)
 
@@ -335,6 +426,58 @@
       (ibuffer-projectile-set-filter-groups)
       (unless (eq ibuffer-sorting-mode 'alphabetic)
         (ibuffer-do-sort-by-alphabetic))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; Go ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; From https://dr-knz.net/a-tour-of-emacs-as-go-editor.html
+(use-package go-projectile
+  :ensure t
+  :config
+  (go-projectile-tools-add-path)
+  (setq go-projectile-tools
+	'((gocode    . "github.com/mdempsky/gocode")
+	  (golint    . "golang.org/x/lint/golint")
+	  (godef     . "github.com/rogpeppe/godef")
+	  (errcheck  . "github.com/kisielk/errcheck")
+	  (godoc     . "golang.org/x/tools/cmd/godoc")
+	  (gogetdoc  . "github.com/zmb3/gogetdoc")
+	  (goimports . "golang.org/x/tools/cmd/goimports")
+	  (gorename  . "golang.org/x/tools/cmd/gorename")
+	  (gomvpkg   . "golang.org/x/tools/cmd/gomvpkg")
+	  (guru      . "golang.org/x/tools/cmd/guru"))))
+
+(use-package go-mode
+  :ensure t
+  :config
+  ;; Enable camelCase word motion.
+  (add-hook 'go-mode-hook #'subword-mode)
+
+  ;; (add-hook 'go-mode-hook #'lsp)
+  (add-hook 'go-mode-hook (lambda ()
+
+  ;; Code layout.
+  (setq tab-width 4 indent-tabs-mode 1) ; std go whitespace configuration
+  (add-hook 'before-save-hook 'gofmt-before-save) ; run gofmt on each save
+
+  ;; Shortcuts for common go-test invocations.
+  (let ((map go-mode-map))
+    (define-key map (kbd "C-c a") 'go-test-current-project) ;; current package, really
+    (define-key map (kbd "C-c m") 'go-test-current-file)
+    (define-key map (kbd "C-c .") 'go-test-current-test)
+    )
+
+  ;; Fix parsing of error and warning lines in compiler output.
+  (setq compilation-error-regexp-alist-alist ; first remove the standard conf; it's not good.
+        (remove 'go-panic
+                (remove 'go-test compilation-error-regexp-alist-alist)))
+  ;; Make another one that works better and strips more space at the beginning.
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(go-test . ("^[[:space:]]*\\([_a-zA-Z./][_a-zA-Z0-9./]*\\):\\([0-9]+\\):.*$" 1 2)))
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(go-panic . ("^[[:space:]]*\\([_a-zA-Z./][_a-zA-Z0-9./]*\\):\\([0-9]+\\)[[:space:]].*$" 1 2)))
+  ;; override.
+  (add-to-list 'compilation-error-regexp-alist 'go-test t)
+  (add-to-list 'compilation-error-regexp-alist 'go-panic t)
+  )))
 
 ;; magit
 (use-package magit
@@ -386,115 +529,120 @@
 ;;   (("C-c t" . treemacs)
 ;;    ("s-a" . treemacs)))
 
-;; (use-package treemacs
-;;   :defer t
-;;   :init
-;;   (with-eval-after-load 'winum
-;;     (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
-;;   :config
-;;   (progn
-;;     (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
-;;           treemacs-deferred-git-apply-delay        0.5
-;;           treemacs-directory-name-transformer      #'identity
-;;           treemacs-display-in-side-window          t
-;;           treemacs-eldoc-display                   'simple
-;;           treemacs-file-event-delay                2000
-;;           treemacs-file-extension-regex            treemacs-last-period-regex-value
-;;           treemacs-file-follow-delay               0.2
-;;           treemacs-file-name-transformer           #'identity
-;;           treemacs-follow-after-init               t
-;;           treemacs-expand-after-init               t
-;;           treemacs-find-workspace-method           'find-for-file-or-pick-first
-;;           treemacs-git-command-pipe                ""
-;;           treemacs-goto-tag-strategy               'refetch-index
-;;           treemacs-header-scroll-indicators        '(nil . "^^^^^^")
-;;           treemacs-hide-dot-git-directory          t
-;;           treemacs-indentation                     2
-;;           treemacs-indentation-string              " "
-;;           treemacs-is-never-other-window           t
-;;           treemacs-max-git-entries                 5000
-;;           treemacs-missing-project-action          'ask
-;;           treemacs-move-forward-on-expand          nil
-;;           treemacs-no-png-images                   nil
-;;           treemacs-no-delete-other-windows         t
-;;           treemacs-project-follow-cleanup          nil
-;;           treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-;;           treemacs-position                        'left
-;;           treemacs-read-string-input               'from-child-frame
-;;           treemacs-recenter-distance               0.1
-;;           treemacs-recenter-after-file-follow      nil
-;;           treemacs-recenter-after-tag-follow       nil
-;;           treemacs-recenter-after-project-jump     'always
-;;           treemacs-recenter-after-project-expand   'on-distance
-;;           treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
-;;           treemacs-project-follow-into-home        nil
-;;           treemacs-show-cursor                     nil
-;;           treemacs-show-hidden-files               t
-;;           treemacs-silent-filewatch                nil
-;;           treemacs-silent-refresh                  nil
-;;           treemacs-sorting                         'alphabetic-asc
-;;           treemacs-select-when-already-in-treemacs 'move-back
-;;           treemacs-space-between-root-nodes        t
-;;           treemacs-tag-follow-cleanup              t
-;;           treemacs-tag-follow-delay                1.5
-;;           treemacs-text-scale                      nil
-;;           treemacs-user-mode-line-format           nil
-;;           treemacs-user-header-line-format         nil
-;;           treemacs-wide-toggle-width               70
-;;           treemacs-width                           35
-;;           treemacs-width-increment                 1
-;;           treemacs-width-is-initially-locked       t
-;;           treemacs-workspace-switch-cleanup        nil)
+(use-package treemacs
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay        0.5
+          treemacs-directory-name-transformer      #'identity
+          treemacs-display-in-side-window          t
+          treemacs-eldoc-display                   'simple
+          treemacs-file-event-delay                2000
+          treemacs-file-extension-regex            treemacs-last-period-regex-value
+          treemacs-file-follow-delay               0.2
+          treemacs-file-name-transformer           #'identity
+          treemacs-follow-after-init               t
+          treemacs-expand-after-init               t
+          treemacs-find-workspace-method           'find-for-file-or-pick-first
+          treemacs-git-command-pipe                ""
+          treemacs-goto-tag-strategy               'refetch-index
+          treemacs-header-scroll-indicators        '(nil . "^^^^^^")
+          treemacs-hide-dot-git-directory          t
+          treemacs-indentation                     2
+          treemacs-indentation-string              " "
+          treemacs-is-never-other-window           t
+          treemacs-max-git-entries                 5000
+          treemacs-missing-project-action          'ask
+          treemacs-move-forward-on-expand          nil
+          treemacs-no-png-images                   nil
+          treemacs-no-delete-other-windows         t
+          treemacs-project-follow-cleanup          nil
+          treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
+          treemacs-position                        'left
+          treemacs-read-string-input               'from-child-frame
+          treemacs-recenter-distance               0.1
+          treemacs-recenter-after-file-follow      nil
+          treemacs-recenter-after-tag-follow       nil
+          treemacs-recenter-after-project-jump     'always
+          treemacs-recenter-after-project-expand   'on-distance
+          treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
+          treemacs-project-follow-into-home        nil
+          treemacs-show-cursor                     nil
+          treemacs-show-hidden-files               t
+          treemacs-silent-filewatch                nil
+          treemacs-silent-refresh                  nil
+          treemacs-sorting                         'alphabetic-asc
+          treemacs-select-when-already-in-treemacs 'move-back
+          treemacs-space-between-root-nodes        t
+          treemacs-tag-follow-cleanup              t
+          treemacs-tag-follow-delay                1.5
+          treemacs-text-scale                      nil
+          treemacs-user-mode-line-format           nil
+          treemacs-user-header-line-format         nil
+          treemacs-wide-toggle-width               70
+          treemacs-width                           35
+          treemacs-width-increment                 1
+          treemacs-width-is-initially-locked       t
+          treemacs-workspace-switch-cleanup        nil)
 
-;;     ;; The default width and height of the icons is 22 pixels. If you are
-;;     ;; using a Hi-DPI display, uncomment this to double the icon size.
-;;     ;;(treemacs-resize-icons 44)
+    ;; The default width and height of the icons is 22 pixels. If you are
+    ;; using a Hi-DPI display, uncomment this to double the icon size.
+    ;;(treemacs-resize-icons 44)
 
-;;     (treemacs-follow-mode t)
-;;     (treemacs-filewatch-mode t)
-;;     (treemacs-fringe-indicator-mode 'always)
-;;     (when treemacs-python-executable
-;;       (treemacs-git-commit-diff-mode t))
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode 'always)
+    (when treemacs-python-executable
+      (treemacs-git-commit-diff-mode t))
 
-;;     (pcase (cons (not (null (executable-find "git")))
-;;                  (not (null treemacs-python-executable)))
-;;       (`(t . t)
-;;        (treemacs-git-mode 'deferred))
-;;       (`(t . _)
-;;        (treemacs-git-mode 'simple)))
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple)))
 
-;;     (treemacs-hide-gitignored-files-mode nil))
-;;   :bind
-;;   (:map global-map
-;;         ("M-0"       . treemacs-select-window)
-;;         ("C-x t 1"   . treemacs-delete-other-windows)
-;;         ("C-x t t"   . treemacs)
-;;         ("C-x t d"   . treemacs-select-directory)
-;;         ("C-x t B"   . treemacs-bookmark)
-;;         ("C-x t C-t" . treemacs-find-file)
-;;         ("C-x t M-t" . treemacs-find-tag)))
+    (treemacs-hide-gitignored-files-mode nil))
+  :bind
+  (:map global-map
+        ("M-0"       . treemacs-select-window)
+        ("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t d"   . treemacs-select-directory)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
 
-;; (use-package treemacs-projectile
-;;   :after (treemacs projectile))
+(use-package treemacs-projectile
+  :after (treemacs projectile))
 
-;; (use-package treemacs-icons-dired
-;;   :hook (dired-mode . treemacs-icons-dired-enable-once))
+(use-package treemacs-icons-dired
+  :hook (dired-mode . treemacs-icons-dired-enable-once))
 
-;; (use-package treemacs-magit
-;;   :after (treemacs magit))
+(use-package treemacs-magit
+  :after (treemacs magit))
 
-;; (use-package treemacs-tab-bar
-;;   :after (treemacs dash)
-;;   :config (treemacs-set-scope-type 'Tabs))
+(use-package treemacs-tab-bar
+  :after (treemacs dash)
+  :config (treemacs-set-scope-type 'Tabs))
 
-;; (defun treemacs-styling-hooks ()
-;;   "Hide modeline and line numbers in treemacs window."
-;;   (setq-local mode-line-format nil)
-;;   (display-line-numbers-mode -1))
+(defun treemacs-styling-hooks ()
+  "Hide modeline and line numbers in treemacs window."
+  (setq-local mode-line-format nil)
+  (display-line-numbers-mode -1))
 
-;; (add-hook 'treemacs-mode-hook 'treemacs-styling-hooks)
+(add-hook 'treemacs-mode-hook 'treemacs-styling-hooks)
 
 (use-package dash)
+
+(use-package graphviz-dot-mode
+  :ensure t
+  :config
+  (setq graphviz-dot-indent-width 4))
 
 (use-package highlight-indent-guides
   :init (highlight-indent-guides-mode t)
@@ -524,6 +672,37 @@
 ;;   (which-key-setup-side-window-bottom)
 ;;   (setq which-key-use-C-h-for-paging t
 ;; 	which-key-prevent-C-h-from-cycling t))
+
+(use-package web-mode
+  :mode
+  (
+   ".twig$"
+   ".html?$"
+   ".hbs$"
+   ".vue$"
+   ".blade.php$"
+   )
+  :config
+  (setq
+   web-mode-markup-indent-offset 2
+   web-mode-css-indent-offset 2
+   web-mode-code-indent-offset 2
+   web-mode-style-padding 2
+   web-mode-script-padding 2
+   web-mode-enable-auto-closing t
+   web-mode-enable-auto-opening t
+   web-mode-enable-auto-pairing t
+   web-mode-enable-auto-indentation t)
+
+  ;; Let smartparens handle auto closing brackets, e.g. {{ }} or {% %}
+  ;; https://github.com/hlissner/doom-emacs/blob/develop/modules/lang/web/%2Bhtml.el#L56
+  (dolist (alist web-mode-engines-auto-pairs)
+    (setcdr alist
+            (cl-loop for pair in (cdr alist)
+                     unless (string-match-p "^[a-z-]" (cdr pair))
+                     collect (cons (car pair)
+                                   (string-trim-right (cdr pair)
+                                                      "\\(?:>\\|]\\|}\\)+\\'"))))))
 
 ;; Helpful little thing https://github.com/justbur/emacs-which-key
 ;;(require 'which-key)
@@ -710,6 +889,9 @@
 (global-set-key '[M-up] 'windmove-up)
 (global-set-key '[M-down] 'windmove-down)
 
+;; Join lines (does not work)
+(global-set-key '[S-M-j] 'delete-indentation)
+
 ;; For Emacs 27.1 tab-bar-mode
 (global-set-key '[C-next] 'tab-next)
 (global-set-key '[C-prior] 'tab-previous)
@@ -872,7 +1054,9 @@
      ".d"))
  '(custom-enabled-themes '(gruvbox-dark-soft))
  '(custom-safe-themes
-   '("871b064b53235facde040f6bdfa28d03d9f4b966d8ce28fb1725313731a2bcc8"
+   '("d445c7b530713eac282ecdeea07a8fa59692c83045bf84dd112dd738c7bcad1d"
+     "7b8f5bbdc7c316ee62f271acf6bcd0e0b8a272fdffe908f8c920b0ba34871d98"
+     "871b064b53235facde040f6bdfa28d03d9f4b966d8ce28fb1725313731a2bcc8"
      "3e374bb5eb46eb59dbd92578cae54b16de138bc2e8a31a2451bf6fdb0f3fd81b"
      "19a2c0b92a6aa1580f1be2deb7b8a8e3a4857b6c6ccf522d00547878837267e7"
      "fa49766f2acb82e0097e7512ae4a1d6f4af4d6f4655a48170d0a00bcb7183970"
@@ -896,6 +1080,10 @@
  '(desktop-save-mode t)
  '(diff-switches "-u")
  '(display-line-numbers-type nil)
+ '(display-time-day-and-date t)
+ '(display-time-default-load-average nil)
+ '(display-time-format "%a %b %d %H:%M")
+ '(display-time-mode t)
  '(ediff-merge-split-window-function 'split-window-horizontally)
  '(ediff-split-window-function 'split-window-horizontally)
  '(ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -904,7 +1092,7 @@
  '(font-use-system-font nil)
  '(global-auto-revert-mode t)
  '(global-company-mode nil)
- '(global-prettify-symbols-mode nil)
+ '(global-prettify-symbols-mode t)
  '(graphviz-dot-preview-extension "svg")
  '(highlight-indent-guides-auto-enabled t)
  '(highlight-indent-guides-method 'bitmap)
@@ -977,4 +1165,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight regular :height 98 :width normal)))))
+ '(default ((t (:family "Source Code Pro" :foundry "ADBO" :slant normal :weight regular :height 113 :width normal)))))
